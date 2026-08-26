@@ -1,0 +1,13 @@
+base_url: "http://localhost:8080"
+login_endpoint: "/auth/login"
+
+accounts:
+  victim:
+    email: "victim@test.local"
+    password: "TestPassword123!"
+  attacker_same_level:
+    email: "attacker1@test.local"
+    password: "TestPassword123!"
+  attacker_lower_level:
+    email: "attacker2@test.local"
+    password: "TestPassword123!"

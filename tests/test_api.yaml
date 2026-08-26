@@ -1,0 +1,18 @@
+paths:
+  /users/{id}:
+    get:
+      summary: Récupérer un utilisateur
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+    delete:
+      summary: Supprimer un utilisateur
+  /factures:
+    post:
+      summary: Créer une facture
+  /health:
+    get:
+      summary: Vérifier que l'API tourne
