@@ -1,0 +1,23 @@
+sensitive_fields:
+  pii:
+    - email
+    - nom
+    - telephone
+    - adresse
+  financial:
+    - montant
+    - iban
+    - carte_bancaire
+  secret:
+    - password
+    - token
+    - mot_de_passe_hash
+dynamic_fields:
+  - id
+  - uuid
+  - _id
+  - objectId
+  - createdAt
+  - updatedAt
+  - timestamp
+  - nonce
