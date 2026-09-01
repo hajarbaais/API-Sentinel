@@ -1,13 +1,17 @@
 base_url: "http://localhost:8080"
 login_endpoint: "/auth/login"
+profile_endpoint: "/auth/me"
 
 accounts:
   victim:
-    email: "victim@test.local"
+    email: "admin@test.local"
     password: "TestPassword123!"
+    expected_role: "admin"
   attacker_same_level:
     email: "attacker1@test.local"
     password: "TestPassword123!"
+    expected_role: "user"
   attacker_lower_level:
     email: "attacker2@test.local"
     password: "TestPassword123!"
+    expected_role: "guest"

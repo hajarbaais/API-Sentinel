@@ -1,0 +1,10 @@
+
+role_hierarchy:
+  - admin
+  - user
+  - guest
+
+role_mapping:
+  victim: admin
+  attacker_same_level: user
+  attacker_lower_level: guest

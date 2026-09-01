@@ -1,0 +1,4 @@
+protected_endpoints:
+  - path: "/admin/users"
+    method: "GET"
+    minimum_role: "admin"

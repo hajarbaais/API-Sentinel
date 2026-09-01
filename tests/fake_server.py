@@ -5,11 +5,12 @@ from flask import Flask, request, jsonify
 app = Flask(__name__)
 
 KNOWN_USERS = {
-    "victim@test.local": "TestPassword123!",
-    "attacker1@test.local": "TestPassword123!",
-    "attacker2@test.local": "TestPassword123!",
+    "admin@test.local": {"password": "TestPassword123!", "role": "admin"},
+    "attacker1@test.local": {"password": "TestPassword123!", "role": "user"},
+    "attacker2@test.local": {"password": "TestPassword123!", "role": "guest"},
 }
 
+TOKENS: dict[str, str] = {}
 
 FACTURES: dict[str, dict] = {}
 
@@ -20,17 +21,54 @@ def login():
     email = data.get("email")
     password = data.get("password")
 
-    if email in KNOWN_USERS and KNOWN_USERS[email] == password:
+    user = KNOWN_USERS.get(email)
+    if user and user["password"] == password:
         fake_token = f"fake-jwt-token-for-{email}"
+        TOKENS[fake_token] = email
         return jsonify({"token": fake_token}), 200
 
     return jsonify({"error": "Identifiants invalides"}), 401
 
 
-@app.route("/factures", methods=["POST"])
-def create_facture():
+def _current_user_from_request():
+    
     auth_header = request.headers.get("Authorization", "")
     if not auth_header.startswith("Bearer "):
+        return None
+
+    token = auth_header.removeprefix("Bearer ")
+    email = TOKENS.get(token)
+    if not email:
+        return None
+
+    return {"email": email, "role": KNOWN_USERS[email]["role"]}
+
+
+@app.route("/auth/me", methods=["GET"])
+def me():
+   
+    user = _current_user_from_request()
+    if not user:
+        return jsonify({"error": "Non authentifie"}), 401
+
+    return jsonify({"email": user["email"], "role": user["role"]}), 200
+
+@app.route("/admin/users", methods=["GET"])
+def admin_list_users():
+    user = _current_user_from_request()
+    if not user:
+        return jsonify({"error": "Non authentifie"}), 401
+
+    if user["role"] != "admin":
+        return jsonify({"error": "Acces refuse"}), 403
+
+    return jsonify({"users": list(KNOWN_USERS.keys())}), 200
+
+
+@app.route("/factures", methods=["POST"])
+def create_facture():
+    user = _current_user_from_request()
+    if not user:
         return jsonify({"error": "Non authentifie"}), 401
 
     data = request.get_json()
@@ -44,7 +82,7 @@ def create_facture():
         "description": data["description"],
         "devise": data.get("devise", "EUR"),
         "dateEmission": data.get("dateEmission"),
-        "owner_token": auth_header,  # utile plus tard pour simuler BOLA
+        "owner_token": request.headers.get("Authorization", ""),
     }
     FACTURES[facture_id] = facture
 
@@ -61,8 +99,6 @@ def get_facture(facture_id):
     if not facture:
         return jsonify({"error": "Facture introuvable"}), 404
 
-    # Verification de propriete ajoutee : le token doit correspondre
-    # exactement a celui utilise lors de la creation de la facture.
     if facture["owner_token"] != auth_header:
         return jsonify({"error": "Acces refuse"}), 403
 
