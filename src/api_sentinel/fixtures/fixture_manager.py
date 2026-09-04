@@ -1,10 +1,13 @@
 
 import logging
+import re
 from dataclasses import dataclass, field
 from datetime import datetime, timezone
+from pathlib import Path
 from typing import Optional
 
 import requests
+import yaml
 
 from api_sentinel.discovery.openapi_parser import Endpoint
 from api_sentinel.accounts.session_manager import Account, SessionManager
@@ -12,32 +15,31 @@ from api_sentinel.fixtures.payload_generator import PayloadGenerator
 
 logger = logging.getLogger(__name__)
 
-
 ID_FIELD_CANDIDATES = ["id", "uuid", "_id", "objectId"]
 
 
 class FixtureCreationError(Exception):
-   
+    
     pass
 
 
 @dataclass
 class Fixture:
     
-    resource_type: str         
-    object_id: str             
+    resource_type: str          
+    object_id: str              
     owner_role: str             
     detail_endpoint: str        
     detail_method: str         
-    creation_payload: dict     
+    creation_payload: dict      
     raw_response: dict          
+                              
     created_at: str = field(
         default_factory=lambda: datetime.now(timezone.utc).isoformat()
     )
 
     def resolved_detail_url(self) -> str:
-       
-        import re
+        
         return re.sub(r"\{[^}]+\}", self.object_id, self.detail_endpoint, count=1)
 
 
@@ -50,6 +52,7 @@ class FixtureCreationFailure:
 
 
 class FixtureManager:
+    
     CREATION_METHOD = "POST"
 
     def __init__(
@@ -58,6 +61,7 @@ class FixtureManager:
         raw_openapi_spec: dict,
         session_manager: SessionManager,
         request_timeout: int = 10,
+        excluded_keywords_config: Optional[str] = None,
     ):
         self.endpoints = endpoints
         self.session_manager = session_manager
@@ -68,14 +72,46 @@ class FixtureManager:
         self.fixtures: list[Fixture] = []
         self.failures: list[FixtureCreationFailure] = []
 
+        self._excluded_keywords = self._load_excluded_keywords(excluded_keywords_config)
+
+    def _load_excluded_keywords(self, config_path: Optional[str]) -> list[str]:
+       
+        if not config_path:
+            logger.warning(
+                "Aucun fichier d'exclusion d'actions fourni - le framework "
+                "risque de tenter des creations de fixtures sur des "
+                "endpoints d'action (login, changement d'email...), ce "
+                "qui peut alterer l'etat des comptes de test (ENF2)."
+            )
+            return []
+
+        path = Path(config_path)
+        if not path.exists():
+            logger.warning(
+                "Fichier d'exclusion d'actions introuvable : %s - "
+                "aucune exclusion appliquee.", path,
+            )
+            return []
+
+        content = yaml.safe_load(path.read_text(encoding="utf-8"))
+        keywords = content.get("excluded_path_keywords", [])
+        normalized = [k.lower() for k in keywords]
+
+        logger.info(
+            "Exclusion d'actions chargee : %d mot(s)-cle(s) (%s).",
+            len(normalized), ", ".join(normalized),
+        )
+        return normalized
+
     def create_all_fixtures(self, roles: list[str]) -> list[Fixture]:
        
         creation_endpoints = self._find_creation_endpoints()
 
         if not creation_endpoints:
             logger.warning(
-                "Aucun endpoint de creation (POST sans parametre d'ID) "
-                "trouve dans la specification OpenAPI."
+                "Aucun endpoint de creation (POST sans parametre d'ID, "
+                "hors actions exclues) trouve dans la specification "
+                "OpenAPI."
             )
             return []
 
@@ -92,14 +128,35 @@ class FixtureManager:
         return self.fixtures
 
     def _find_creation_endpoints(self) -> list[Endpoint]:
-        
-        return [
+      
+        candidates = [
             ep for ep in self.endpoints
             if ep.method == self.CREATION_METHOD and not ep.has_path_param
         ]
 
+        filtered = [
+            ep for ep in candidates
+            if not self._is_excluded_action(ep.path)
+        ]
+
+        excluded_count = len(candidates) - len(filtered)
+        if excluded_count > 0:
+            logger.info(
+                "%d endpoint(s) POST exclu(s) de la creation de fixtures "
+                "(actions destructives connues : login, changement "
+                "d'email, reinitialisation de mot de passe...).",
+                excluded_count,
+            )
+
+        return filtered
+
+    def _is_excluded_action(self, path: str) -> bool:
+       
+        normalized_path = path.lower()
+        return any(keyword in normalized_path for keyword in self._excluded_keywords)
+
     def _create_fixture_for(self, endpoint: Endpoint, account: Account) -> None:
-        
+       
         operation = self._get_operation_definition(endpoint)
         payload = self.payload_generator.generate_for_request_body(operation)
 
@@ -145,11 +202,19 @@ class FixtureManager:
             self._record_failure(
                 endpoint, account,
                 f"Aucun champ d'identifiant reconnu dans la reponse "
-                f"(champs recherches : {ID_FIELD_CANDIDATES})."
+                f"(champs recherches : {ID_FIELD_CANDIDATES}). "
+                f"Cet endpoint a probablement reussi mais n'est pas "
+                f"une creation de ressource identifiable - a ajouter "
+                f"a la liste d'exclusion si confirme."
             )
             return
 
         detail_endpoint = self._match_detail_endpoint(endpoint)
+
+        
+        full_response_data = self._fetch_full_object(
+            detail_endpoint, object_id, account
+        ) or response_data
 
         fixture = Fixture(
             resource_type=endpoint.path,
@@ -158,9 +223,45 @@ class FixtureManager:
             detail_endpoint=detail_endpoint.path if detail_endpoint else f"{endpoint.path}/{{id}}",
             detail_method=detail_endpoint.method if detail_endpoint else "GET",
             creation_payload=payload,
-            raw_response=response_data,
+            raw_response=full_response_data,
         )
         self.fixtures.append(fixture)
+
+    def _fetch_full_object(
+        self, detail_endpoint: Optional[Endpoint], object_id: str, account: Account
+    ) -> Optional[dict]:
+        
+        if not detail_endpoint:
+            return None
+
+        resolved_path = re.sub(r"\{[^}]+\}", str(object_id), detail_endpoint.path, count=1)
+        url = f"{account.base_url}{resolved_path}"
+
+        try:
+            response = requests.request(
+                detail_endpoint.method, url,
+                headers=account.auth_headers(),
+                timeout=self.request_timeout,
+            )
+        except requests.RequestException as exc:
+            logger.debug(
+                "Impossible de relire l'objet cree pour enrichir la "
+                "verite terrain (%s %s) : %s", detail_endpoint.method, url, exc,
+            )
+            return None
+
+        if response.status_code != 200:
+            logger.debug(
+                "Relecture de l'objet cree non concluante (%s %s -> %s) - "
+                "verite terrain limitee a la reponse de creation.",
+                detail_endpoint.method, url, response.status_code,
+            )
+            return None
+
+        try:
+            return response.json()
+        except ValueError:
+            return None
 
     def _get_operation_definition(self, endpoint: Endpoint) -> dict:
        
@@ -169,6 +270,8 @@ class FixtureManager:
 
     def _extract_object_id(self, response_data: dict) -> Optional[str]:
         
+        if not isinstance(response_data, dict):
+            return None
         for field_name in ID_FIELD_CANDIDATES:
             if field_name in response_data:
                 return response_data[field_name]
@@ -185,7 +288,7 @@ class FixtureManager:
         return candidates[0] if candidates else None
 
     def _record_failure(self, endpoint: Endpoint, account: Account, reason: str) -> None:
-        
+       
         logger.warning(
             "Echec de creation de fixture pour %s %s (role: %s) : %s",
             endpoint.method, endpoint.path, account.role, reason,
@@ -206,8 +309,13 @@ if __name__ == "__main__":
     logging.basicConfig(level=logging.INFO, format="%(levelname)s: %(message)s")
 
     if len(sys.argv) < 3:
-        print("Usage : python fixture_manager.py <openapi.yaml> <accounts.yaml>")
+        print(
+            "Usage : python fixture_manager.py <openapi.yaml> <accounts.yaml> "
+            "[excluded_actions.yaml]"
+        )
         sys.exit(1)
+
+    excluded_config = sys.argv[3] if len(sys.argv) > 3 else "config/excluded_action_endpoints.yaml"
 
     parser = OpenAPIParser(sys.argv[1])
     endpoints = parser.parse()
@@ -219,6 +327,7 @@ if __name__ == "__main__":
         endpoints=endpoints,
         raw_openapi_spec=parser.raw_spec,
         session_manager=session_manager,
+        excluded_keywords_config=excluded_config,
     )
     fixtures = manager.create_all_fixtures(
         roles=["victim", "attacker_same_level", "attacker_lower_level"]

@@ -1,0 +1,13 @@
+base_url: "http://localhost:8888"
+login_endpoint: "/identity/api/auth/login"
+
+accounts:
+  victim:
+    email: "victim@crapi.test"
+    password: "TestPassword123!"
+  attacker_same_level:
+    email: "attacker1@crapi.test"
+    password: "TestPassword123!"
+  attacker_lower_level:
+    email: "attacker2@crapi.test"
+    password: "TestPassword123!"

@@ -1,4 +1,3 @@
-
 import logging
 from dataclasses import dataclass, field
 
@@ -10,14 +9,14 @@ logger = logging.getLogger(__name__)
 
 @dataclass
 class ComparisonResult:
+   
     is_leak: bool
     leaked_fields: list[str] = field(default_factory=list)
-    confidence: float = 0.0         
-    reasoning: str = ""             
-
+    confidence: float = 0.0          
+    reasoning: str = ""              
 
 class DifferentialComparator:
-    
+   
     def __init__(
         self,
         sensitivity_classifier: FieldSensitivityClassifier,
@@ -32,11 +31,7 @@ class DifferentialComparator:
         attacker_response_data: dict,
         attacker_status_code: int,
     ) -> ComparisonResult:
-        """
-        Compare les donnees reellement possedees par la victime
-        (known_victim_data, issues de la creation de la fixture)
-        avec ce que l'attaquant a obtenu en interrogeant cet objet.
-        """
+       
         if attacker_status_code in (401, 403, 404):
             return ComparisonResult(
                 is_leak=False,
@@ -58,6 +53,17 @@ class DifferentialComparator:
                 ),
             )
 
+        if not isinstance(known_victim_data, dict) or not isinstance(attacker_response_data, dict):
+            return ComparisonResult(
+                is_leak=False,
+                confidence=0.3,
+                reasoning=(
+                    "Reponse non structuree en objet JSON - comparaison "
+                    "differentielle impossible, resultat ambigu."
+                ),
+            )
+
+        
         clean_victim = self.noise_filter.strip(known_victim_data)
         clean_attacker = self.noise_filter.strip(attacker_response_data)
 
@@ -75,7 +81,7 @@ class DifferentialComparator:
                 ),
             )
 
-        confidence = self._compute_confidence(leaked_fields, clean_victim)
+        confidence = self._compute_confidence(leaked_fields)
 
         return ComparisonResult(
             is_leak=True,
@@ -84,31 +90,62 @@ class DifferentialComparator:
             reasoning=(
                 f"{len(leaked_fields)} champ(s) sensible(s) appartenant a la "
                 "victime ont ete retrouves, avec la meme valeur, dans la "
-                "reponse obtenue par l'attaquant."
+                "reponse obtenue par l'attaquant : "
+                f"{', '.join(name for name, _ in leaked_fields)}."
             ),
         )
+
+    def _flatten(self, data: dict, parent_key: str = "") -> dict:
+        
+        flat = {}
+        for key, value in data.items():
+            full_key = f"{parent_key}.{key}" if parent_key else key
+            if isinstance(value, dict):
+                flat.update(self._flatten(value, full_key))
+            elif isinstance(value, list):
+                for i, item in enumerate(value):
+                    if isinstance(item, dict):
+                        flat.update(self._flatten(item, f"{full_key}[{i}]"))
+                    else:
+                        flat[f"{full_key}[{i}]"] = item
+            else:
+                flat[full_key] = value
+        return flat
 
     def _find_matching_sensitive_fields(
         self, victim_data: dict, attacker_data: dict
     ) -> list[tuple[str, str]]:
-        
+       
+        flat_victim = self._flatten(victim_data)
+        flat_attacker = self._flatten(attacker_data)
+
         matches = []
-        for key, victim_value in victim_data.items():
-            if key not in attacker_data:
+        seen_field_names = set()
+
+        for key, victim_value in flat_victim.items():
+            if key not in flat_attacker:
                 continue
-            if attacker_data[key] != victim_value:
+            if flat_attacker[key] != victim_value:
                 continue
             if victim_value in (None, "", 0):
+                
+                continue
+
+            field_name = key.split(".")[-1].split("[")[0]
+
+            if field_name in seen_field_names:
                
                 continue
-            if self.sensitivity_classifier.is_sensitive(key):
-                matches.append((key, self.sensitivity_classifier.category_of(key)))
+
+            if self.sensitivity_classifier.is_sensitive(field_name):
+                category = self.sensitivity_classifier.category_of(field_name)
+                matches.append((field_name, category))
+                seen_field_names.add(field_name)
+
         return matches
 
-    def _compute_confidence(
-        self, leaked_fields: list[tuple[str, str]], victim_data: dict
-    ) -> float:
-        
+    def _compute_confidence(self, leaked_fields: list[tuple[str, str]]) -> float:
+       
         categories_found = {category for _, category in leaked_fields}
 
         if "secret" in categories_found:

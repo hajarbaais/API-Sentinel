@@ -2,16 +2,27 @@ sensitive_fields:
   pii:
     - email
     - nom
+    - name
+    - nickname
     - telephone
+    - number
     - adresse
   financial:
     - montant
+    - amount
+    - price
     - iban
     - carte_bancaire
+    - card_number
+    - card_owner_name
+    - card_type
+    - card_expiry
   secret:
     - password
     - token
     - mot_de_passe_hash
+    - transaction_id
+
 dynamic_fields:
   - id
   - uuid
@@ -19,5 +30,9 @@ dynamic_fields:
   - objectId
   - createdAt
   - updatedAt
+  - CreatedAt
+  - created_at
+  - created_on
   - timestamp
   - nonce
+  - paid_on

@@ -154,6 +154,7 @@ if __name__ == "__main__":
         endpoints=endpoints,
         raw_openapi_spec=parser.raw_spec,
         session_manager=session_manager,
+        excluded_keywords_config="config/excluded_action_endpoints.yaml",
     )
     fixtures = fixture_manager.create_all_fixtures(
         roles=["victim", "attacker_same_level", "attacker_lower_level"]

@@ -1,0 +1,11 @@
+
+excluded_path_keywords:
+  - "login"
+  - "signup"
+  - "change-email"
+  - "change-password"
+  - "reset-password"
+  - "forget-password"
+  - "verify-email"
+  - "check-otp"
+  - "logout"
