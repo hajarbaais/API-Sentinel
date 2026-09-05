@@ -1,0 +1,213 @@
+{
+  "target_name": "OWASP crAPI",
+  "target_base_url": "http://localhost:8888",
+  "generated_at": "2026-09-05T21:12:11.935817+00:00",
+  "summary": {
+    "total_findings": 4,
+    "findings_by_severity": {
+      "critical": 4
+    },
+    "findings_by_detector": {
+      "bola": 4
+    },
+    "findings_by_owasp_category": {
+      "API1:2023 - Broken Object Level Authorization": 4
+    }
+  },
+  "coverage": {
+    "total_creation_endpoints_attempted": 36,
+    "fixtures_created_successfully": 9,
+    "creation_failures": 27,
+    "failure_reasons": [
+      {
+        "endpoint": "/identity/api/v2/user/pictures",
+        "role": "victim",
+        "reason": "Payload non generable (pas de schema JSON exploitable)."
+      },
+      {
+        "endpoint": "/identity/api/v2/user/videos",
+        "role": "victim",
+        "reason": "Payload non generable (pas de schema JSON exploitable)."
+      },
+      {
+        "endpoint": "/identity/api/v2/vehicle/add_vehicle",
+        "role": "victim",
+        "reason": "Code HTTP inattendu : 403 (corps de reponse : {\"message\":\"Sorry, This Vehicle is already added.\",\"status\":403})"
+      },
+      {
+        "endpoint": "/identity/api/v2/vehicle/resend_email",
+        "role": "victim",
+        "reason": "Payload non generable (pas de schema JSON exploitable)."
+      },
+      {
+        "endpoint": "/community/api/v2/coupon/new-coupon",
+        "role": "victim",
+        "reason": "Code HTTP inattendu : 400 (corps de reponse : {\"error\":\"json: cannot unmarshal number into Go struct field Coupon.amount of type string\"}\n)"
+      },
+      {
+        "endpoint": "/community/api/v2/coupon/validate-coupon",
+        "role": "victim",
+        "reason": "Aucun champ d'identifiant reconnu dans la reponse (champs recherches : ['id', 'uuid', '_id', 'objectId']). Cet endpoint a probablement reussi mais n'est pas une creation de ressource identifiable - a ajouter a la liste d'exclusion si confirme."
+      },
+      {
+        "endpoint": "/workshop/api/shop/orders/return_order",
+        "role": "victim",
+        "reason": "Payload non generable (pas de schema JSON exploitable)."
+      },
+      {
+        "endpoint": "/workshop/api/shop/apply_coupon",
+        "role": "victim",
+        "reason": "Code HTTP inattendu : 400 (corps de reponse : {\"message\":\"TRAC075 Coupon code is already claimed by you!! Please try with another coupon code\"})"
+      },
+      {
+        "endpoint": "/workshop/api/merchant/contact_mechanic",
+        "role": "victim",
+        "reason": "Code HTTP inattendu : 400 (corps de reponse : {\"message\":\"Invalid URL 'sentinel-test-d7985a4f': No scheme supplied. Perhaps you meant https://sentinel-test-d7985a4f?\"})"
+      },
+      {
+        "endpoint": "/identity/api/v2/user/pictures",
+        "role": "attacker_same_level",
+        "reason": "Payload non generable (pas de schema JSON exploitable)."
+      },
+      {
+        "endpoint": "/identity/api/v2/user/videos",
+        "role": "attacker_same_level",
+        "reason": "Payload non generable (pas de schema JSON exploitable)."
+      },
+      {
+        "endpoint": "/identity/api/v2/vehicle/add_vehicle",
+        "role": "attacker_same_level",
+        "reason": "Code HTTP inattendu : 403 (corps de reponse : {\"message\":\"Sorry, This Vehicle is already added.\",\"status\":403})"
+      },
+      {
+        "endpoint": "/identity/api/v2/vehicle/resend_email",
+        "role": "attacker_same_level",
+        "reason": "Payload non generable (pas de schema JSON exploitable)."
+      },
+      {
+        "endpoint": "/community/api/v2/coupon/new-coupon",
+        "role": "attacker_same_level",
+        "reason": "Code HTTP inattendu : 400 (corps de reponse : {\"error\":\"json: cannot unmarshal number into Go struct field Coupon.amount of type string\"}\n)"
+      },
+      {
+        "endpoint": "/community/api/v2/coupon/validate-coupon",
+        "role": "attacker_same_level",
+        "reason": "Aucun champ d'identifiant reconnu dans la reponse (champs recherches : ['id', 'uuid', '_id', 'objectId']). Cet endpoint a probablement reussi mais n'est pas une creation de ressource identifiable - a ajouter a la liste d'exclusion si confirme."
+      },
+      {
+        "endpoint": "/workshop/api/shop/orders/return_order",
+        "role": "attacker_same_level",
+        "reason": "Payload non generable (pas de schema JSON exploitable)."
+      },
+      {
+        "endpoint": "/workshop/api/shop/apply_coupon",
+        "role": "attacker_same_level",
+        "reason": "Code HTTP inattendu : 400 (corps de reponse : {\"message\":\"TRAC075 Coupon code is already claimed by you!! Please try with another coupon code\"})"
+      },
+      {
+        "endpoint": "/workshop/api/merchant/contact_mechanic",
+        "role": "attacker_same_level",
+        "reason": "Code HTTP inattendu : 400 (corps de reponse : {\"message\":\"Invalid URL 'sentinel-test-debfddae': No scheme supplied. Perhaps you meant https://sentinel-test-debfddae?\"})"
+      },
+      {
+        "endpoint": "/identity/api/v2/user/pictures",
+        "role": "attacker_lower_level",
+        "reason": "Payload non generable (pas de schema JSON exploitable)."
+      },
+      {
+        "endpoint": "/identity/api/v2/user/videos",
+        "role": "attacker_lower_level",
+        "reason": "Payload non generable (pas de schema JSON exploitable)."
+      },
+      {
+        "endpoint": "/identity/api/v2/vehicle/add_vehicle",
+        "role": "attacker_lower_level",
+        "reason": "Code HTTP inattendu : 403 (corps de reponse : {\"message\":\"Sorry, This Vehicle is already added.\",\"status\":403})"
+      },
+      {
+        "endpoint": "/identity/api/v2/vehicle/resend_email",
+        "role": "attacker_lower_level",
+        "reason": "Payload non generable (pas de schema JSON exploitable)."
+      },
+      {
+        "endpoint": "/community/api/v2/coupon/new-coupon",
+        "role": "attacker_lower_level",
+        "reason": "Code HTTP inattendu : 400 (corps de reponse : {\"error\":\"json: cannot unmarshal number into Go struct field Coupon.amount of type string\"}\n)"
+      },
+      {
+        "endpoint": "/community/api/v2/coupon/validate-coupon",
+        "role": "attacker_lower_level",
+        "reason": "Aucun champ d'identifiant reconnu dans la reponse (champs recherches : ['id', 'uuid', '_id', 'objectId']). Cet endpoint a probablement reussi mais n'est pas une creation de ressource identifiable - a ajouter a la liste d'exclusion si confirme."
+      },
+      {
+        "endpoint": "/workshop/api/shop/orders/return_order",
+        "role": "attacker_lower_level",
+        "reason": "Payload non generable (pas de schema JSON exploitable)."
+      },
+      {
+        "endpoint": "/workshop/api/shop/apply_coupon",
+        "role": "attacker_lower_level",
+        "reason": "Code HTTP inattendu : 400 (corps de reponse : {\"message\":\"TRAC075 Coupon code is already claimed by you!! Please try with another coupon code\"})"
+      },
+      {
+        "endpoint": "/workshop/api/merchant/contact_mechanic",
+        "role": "attacker_lower_level",
+        "reason": "Code HTTP inattendu : 400 (corps de reponse : {\"message\":\"Invalid URL 'sentinel-test-6bacc081': No scheme supplied. Perhaps you meant https://sentinel-test-6bacc081?\"})"
+      }
+    ]
+  },
+  "findings": [
+    {
+      "detector": "bola",
+      "owasp_category": "API1:2023 - Broken Object Level Authorization",
+      "severity": "critical",
+      "confidence": 0.9,
+      "title": "BOLA confirme sur /community/api/v2/community/posts : le role 'attacker_same_level' accede aux donnees du role 'victim'",
+      "description": "2 champ(s) sensible(s) appartenant a la victime ont ete retrouves, avec la meme valeur, dans la reponse obtenue par l'attaquant : nickname, email.",
+      "affected_endpoint": "/community/api/v2/community/posts/ntKbn5Uf79KywBvFnpTDXS",
+      "evidence_test_id": "bola-00001",
+      "victim_role": "victim",
+      "attacker_role": "attacker_same_level",
+      "detected_at": "2026-09-05T21:12:00.768084+00:00"
+    },
+    {
+      "detector": "bola",
+      "owasp_category": "API1:2023 - Broken Object Level Authorization",
+      "severity": "critical",
+      "confidence": 0.9,
+      "title": "BOLA confirme sur /community/api/v2/community/posts : le role 'attacker_lower_level' accede aux donnees du role 'victim'",
+      "description": "2 champ(s) sensible(s) appartenant a la victime ont ete retrouves, avec la meme valeur, dans la reponse obtenue par l'attaquant : nickname, email.",
+      "affected_endpoint": "/community/api/v2/community/posts/ntKbn5Uf79KywBvFnpTDXS",
+      "evidence_test_id": "bola-00002",
+      "victim_role": "victim",
+      "attacker_role": "attacker_lower_level",
+      "detected_at": "2026-09-05T21:12:02.870983+00:00"
+    },
+    {
+      "detector": "bola",
+      "owasp_category": "API1:2023 - Broken Object Level Authorization",
+      "severity": "critical",
+      "confidence": 0.98,
+      "title": "BOLA confirme sur /workshop/api/shop/orders : le role 'attacker_same_level' accede aux donnees du role 'victim'",
+      "description": "10 champ(s) sensible(s) appartenant a la victime ont ete retrouves, avec la meme valeur, dans la reponse obtenue par l'attaquant : email, number, name, price, transaction_id, amount, card_number, card_owner_name, card_type, card_expiry.",
+      "affected_endpoint": "/workshop/api/shop/orders/16",
+      "evidence_test_id": "bola-00005",
+      "victim_role": "victim",
+      "attacker_role": "attacker_same_level",
+      "detected_at": "2026-09-05T21:12:09.640466+00:00"
+    },
+    {
+      "detector": "bola",
+      "owasp_category": "API1:2023 - Broken Object Level Authorization",
+      "severity": "critical",
+      "confidence": 0.98,
+      "title": "BOLA confirme sur /workshop/api/shop/orders : le role 'attacker_lower_level' accede aux donnees du role 'victim'",
+      "description": "10 champ(s) sensible(s) appartenant a la victime ont ete retrouves, avec la meme valeur, dans la reponse obtenue par l'attaquant : email, number, name, price, transaction_id, amount, card_number, card_owner_name, card_type, card_expiry.",
+      "affected_endpoint": "/workshop/api/shop/orders/16",
+      "evidence_test_id": "bola-00006",
+      "victim_role": "victim",
+      "attacker_role": "attacker_lower_level",
+      "detected_at": "2026-09-05T21:12:11.934480+00:00"
+    }
+  ]
+}
