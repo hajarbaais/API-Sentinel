@@ -1,0 +1,8 @@
+role_hierarchy:
+  - mechanic
+  - user
+
+role_mapping:
+  victim: user
+  attacker_same_level: user
+  attacker_lower_level: user

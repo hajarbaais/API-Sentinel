@@ -1,0 +1,4 @@
+protected_endpoints:
+  - path: "/workshop/api/management/users/all"
+    method: "GET"
+    minimum_role: "mechanic"

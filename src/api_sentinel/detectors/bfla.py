@@ -179,13 +179,17 @@ if __name__ == "__main__":
     logging.basicConfig(level=logging.INFO, format="%(levelname)s: %(message)s")
 
     if len(sys.argv) < 3:
-        print("Usage : python bfla.py <accounts.yaml> <protected_endpoints.yaml>")
+        print(
+            "Usage : python bfla.py <accounts.yaml> <protected_endpoints.yaml> "
+            "[roles.yaml] [baseline_role]"
+        )
         sys.exit(1)
 
     session_manager = SessionManager(sys.argv[1])
     session_manager.authenticate_all()
 
-    role_hierarchy = RoleHierarchy("config/roles.yaml")
+    roles_config = sys.argv[3] if len(sys.argv) > 3 else "config/roles.yaml"
+    role_hierarchy = RoleHierarchy(roles_config)
     evidence_store = EvidenceStore("evidence/bfla_evidence.jsonl")
 
     detector = BFLADetector(
@@ -194,7 +198,8 @@ if __name__ == "__main__":
         evidence_store=evidence_store,
         protected_endpoints_config=sys.argv[2],
     )
-    findings = detector.run(baseline_role="victim")
+    baseline = sys.argv[4] if len(sys.argv) > 4 else "victim"
+    findings = detector.run(baseline_role=baseline)
 
     print(f"\n{len(findings)} faille(s) BFLA confirmee(s) :\n")
     for f in findings:

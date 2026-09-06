@@ -1,17 +1,20 @@
 {
   "target_name": "OWASP crAPI",
   "target_base_url": "http://localhost:8888",
-  "generated_at": "2026-09-05T21:12:11.935817+00:00",
+  "generated_at": "2026-09-06T13:06:46.918332+00:00",
   "summary": {
-    "total_findings": 4,
+    "total_findings": 6,
     "findings_by_severity": {
-      "critical": 4
+      "critical": 4,
+      "high": 2
     },
     "findings_by_detector": {
-      "bola": 4
+      "bola": 4,
+      "bfla": 2
     },
     "findings_by_owasp_category": {
-      "API1:2023 - Broken Object Level Authorization": 4
+      "API1:2023 - Broken Object Level Authorization": 4,
+      "API5:2023 - Broken Function Level Authorization": 2
     }
   },
   "coverage": {
@@ -62,7 +65,7 @@
       {
         "endpoint": "/workshop/api/merchant/contact_mechanic",
         "role": "victim",
-        "reason": "Code HTTP inattendu : 400 (corps de reponse : {\"message\":\"Invalid URL 'sentinel-test-d7985a4f': No scheme supplied. Perhaps you meant https://sentinel-test-d7985a4f?\"})"
+        "reason": "Code HTTP inattendu : 400 (corps de reponse : {\"message\":\"Invalid URL 'sentinel-test-e5ebfee7': No scheme supplied. Perhaps you meant https://sentinel-test-e5ebfee7?\"})"
       },
       {
         "endpoint": "/identity/api/v2/user/pictures",
@@ -107,7 +110,7 @@
       {
         "endpoint": "/workshop/api/merchant/contact_mechanic",
         "role": "attacker_same_level",
-        "reason": "Code HTTP inattendu : 400 (corps de reponse : {\"message\":\"Invalid URL 'sentinel-test-debfddae': No scheme supplied. Perhaps you meant https://sentinel-test-debfddae?\"})"
+        "reason": "Code HTTP inattendu : 400 (corps de reponse : {\"message\":\"Invalid URL 'sentinel-test-cc141190': No scheme supplied. Perhaps you meant https://sentinel-test-cc141190?\"})"
       },
       {
         "endpoint": "/identity/api/v2/user/pictures",
@@ -152,7 +155,7 @@
       {
         "endpoint": "/workshop/api/merchant/contact_mechanic",
         "role": "attacker_lower_level",
-        "reason": "Code HTTP inattendu : 400 (corps de reponse : {\"message\":\"Invalid URL 'sentinel-test-6bacc081': No scheme supplied. Perhaps you meant https://sentinel-test-6bacc081?\"})"
+        "reason": "Code HTTP inattendu : 400 (corps de reponse : {\"message\":\"Invalid URL 'sentinel-test-404ba30c': No scheme supplied. Perhaps you meant https://sentinel-test-404ba30c?\"})"
       }
     ]
   },
@@ -164,11 +167,11 @@
       "confidence": 0.9,
       "title": "BOLA confirme sur /community/api/v2/community/posts : le role 'attacker_same_level' accede aux donnees du role 'victim'",
       "description": "2 champ(s) sensible(s) appartenant a la victime ont ete retrouves, avec la meme valeur, dans la reponse obtenue par l'attaquant : nickname, email.",
-      "affected_endpoint": "/community/api/v2/community/posts/ntKbn5Uf79KywBvFnpTDXS",
+      "affected_endpoint": "/community/api/v2/community/posts/QutFR9qvGTuJzzxXRMWmP3",
       "evidence_test_id": "bola-00001",
       "victim_role": "victim",
       "attacker_role": "attacker_same_level",
-      "detected_at": "2026-09-05T21:12:00.768084+00:00"
+      "detected_at": "2026-09-06T13:06:28.262726+00:00"
     },
     {
       "detector": "bola",
@@ -177,11 +180,11 @@
       "confidence": 0.9,
       "title": "BOLA confirme sur /community/api/v2/community/posts : le role 'attacker_lower_level' accede aux donnees du role 'victim'",
       "description": "2 champ(s) sensible(s) appartenant a la victime ont ete retrouves, avec la meme valeur, dans la reponse obtenue par l'attaquant : nickname, email.",
-      "affected_endpoint": "/community/api/v2/community/posts/ntKbn5Uf79KywBvFnpTDXS",
+      "affected_endpoint": "/community/api/v2/community/posts/QutFR9qvGTuJzzxXRMWmP3",
       "evidence_test_id": "bola-00002",
       "victim_role": "victim",
       "attacker_role": "attacker_lower_level",
-      "detected_at": "2026-09-05T21:12:02.870983+00:00"
+      "detected_at": "2026-09-06T13:06:30.366732+00:00"
     },
     {
       "detector": "bola",
@@ -190,11 +193,11 @@
       "confidence": 0.98,
       "title": "BOLA confirme sur /workshop/api/shop/orders : le role 'attacker_same_level' accede aux donnees du role 'victim'",
       "description": "10 champ(s) sensible(s) appartenant a la victime ont ete retrouves, avec la meme valeur, dans la reponse obtenue par l'attaquant : email, number, name, price, transaction_id, amount, card_number, card_owner_name, card_type, card_expiry.",
-      "affected_endpoint": "/workshop/api/shop/orders/16",
+      "affected_endpoint": "/workshop/api/shop/orders/19",
       "evidence_test_id": "bola-00005",
       "victim_role": "victim",
       "attacker_role": "attacker_same_level",
-      "detected_at": "2026-09-05T21:12:09.640466+00:00"
+      "detected_at": "2026-09-06T13:06:37.012383+00:00"
     },
     {
       "detector": "bola",
@@ -203,11 +206,37 @@
       "confidence": 0.98,
       "title": "BOLA confirme sur /workshop/api/shop/orders : le role 'attacker_lower_level' accede aux donnees du role 'victim'",
       "description": "10 champ(s) sensible(s) appartenant a la victime ont ete retrouves, avec la meme valeur, dans la reponse obtenue par l'attaquant : email, number, name, price, transaction_id, amount, card_number, card_owner_name, card_type, card_expiry.",
-      "affected_endpoint": "/workshop/api/shop/orders/16",
+      "affected_endpoint": "/workshop/api/shop/orders/19",
       "evidence_test_id": "bola-00006",
       "victim_role": "victim",
       "attacker_role": "attacker_lower_level",
-      "detected_at": "2026-09-05T21:12:11.934480+00:00"
+      "detected_at": "2026-09-06T13:06:39.529140+00:00"
+    },
+    {
+      "detector": "bfla",
+      "owasp_category": "API5:2023 - Broken Function Level Authorization",
+      "severity": "high",
+      "confidence": 0.9,
+      "title": "BFLA confirme sur GET /workshop/api/management/users/all : le role 'attacker_same_level' (privilege inferieur a 'mechanic') a pu executer cette action reservee.",
+      "description": "La baseline avec un compte reellement autorise a reussi. Le meme appel avec le token du role 'attacker_same_level' a egalement reussi (code 200), alors qu'il aurait du etre refuse.",
+      "affected_endpoint": "GET /workshop/api/management/users/all",
+      "evidence_test_id": "",
+      "victim_role": "mechanic",
+      "attacker_role": "attacker_same_level",
+      "detected_at": "2026-09-06T13:06:44.414960+00:00"
+    },
+    {
+      "detector": "bfla",
+      "owasp_category": "API5:2023 - Broken Function Level Authorization",
+      "severity": "high",
+      "confidence": 0.9,
+      "title": "BFLA confirme sur GET /workshop/api/management/users/all : le role 'attacker_lower_level' (privilege inferieur a 'mechanic') a pu executer cette action reservee.",
+      "description": "La baseline avec un compte reellement autorise a reussi. Le meme appel avec le token du role 'attacker_lower_level' a egalement reussi (code 200), alors qu'il aurait du etre refuse.",
+      "affected_endpoint": "GET /workshop/api/management/users/all",
+      "evidence_test_id": "",
+      "victim_role": "mechanic",
+      "attacker_role": "attacker_lower_level",
+      "detected_at": "2026-09-06T13:06:46.915927+00:00"
     }
   ]
 }

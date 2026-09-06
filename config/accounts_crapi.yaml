@@ -11,3 +11,6 @@ accounts:
   attacker_lower_level:
     email: "attacker2@crapi.test"
     password: "TestPassword123!"
+  mechanic_baseline:
+    email: "mechanic1@crapi.test"
+    password: "TestPassword123!"
