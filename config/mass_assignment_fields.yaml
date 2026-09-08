@@ -1,0 +1,29 @@
+# Champs sensibles a injecter dans les requetes de creation, pour
+# verifier si le serveur les accepte sans les avoir documentes
+# (OWASP API3:2023 - Broken Object Property Level Authorization).
+# Les valeurs choisies sont volontairement improbables comme valeur
+# par defaut legitime, pour eviter qu'une correspondance fortuite
+# soit prise a tort pour une preuve d'exploitation (ENF1).
+injection_candidates:
+  - field: "role"
+    value: "admin"
+  - field: "isAdmin"
+    value: true
+  - field: "is_admin"
+    value: true
+  - field: "admin"
+    value: true
+  - field: "credit"
+    value: 999999
+  - field: "balance"
+    value: 999999
+  - field: "available_credit"
+    value: 999999
+  - field: "price"
+    value: 0
+  - field: "verified"
+    value: true
+  - field: "is_verified"
+    value: true
+  - field: "status"
+    value: "approved"

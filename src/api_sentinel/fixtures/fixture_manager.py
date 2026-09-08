@@ -126,6 +126,14 @@ class FixtureManager:
             len(self.failures),
         )
         return self.fixtures
+    
+
+    def get_creation_endpoints(self) -> list[Endpoint]:
+        
+        return self._find_creation_endpoints()
+
+
+
 
     def _find_creation_endpoints(self) -> list[Endpoint]:
       
