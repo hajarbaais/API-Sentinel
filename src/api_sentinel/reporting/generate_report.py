@@ -1,7 +1,8 @@
 """
-Script d'assemblage : execute les detecteurs disponibles (BOLA, BFLA),
-collecte leurs findings et les metriques de couverture des fixtures,
-puis genere le rapport final (HTML + JSON), conformement a EF5.
+Script d'assemblage : execute les detecteurs disponibles (BOLA, BFLA,
+mass assignment), collecte leurs findings et les metriques de
+couverture des fixtures, puis genere le rapport final (HTML + JSON),
+conformement a EF5.
 """
 
 import logging
@@ -10,6 +11,8 @@ import sys
 from api_sentinel.accounts.session_manager import SessionManager
 from api_sentinel.detectors.bola import BOLADetector
 from api_sentinel.detectors.bfla import BFLADetector
+from api_sentinel.detectors.mass_assignment import MassAssignmentDetector
+from api_sentinel.detectors.field_discovery import FieldDiscovery
 from api_sentinel.differential.comparator import DifferentialComparator
 from api_sentinel.differential.field_sensitivity import FieldSensitivityClassifier
 from api_sentinel.differential.noise_filter import NoiseFilter
@@ -17,6 +20,7 @@ from api_sentinel.differential.role_hierarchy import RoleHierarchy
 from api_sentinel.discovery.openapi_parser import OpenAPIParser
 from api_sentinel.evidence.evidence_store import EvidenceStore
 from api_sentinel.fixtures.fixture_manager import FixtureManager
+from api_sentinel.fixtures.payload_generator import PayloadGenerator
 from api_sentinel.reporting.report_generator import ReportGenerator
 
 logger = logging.getLogger(__name__)
@@ -29,7 +33,8 @@ def main():
         print(
             "Usage : python generate_report.py <openapi.json> <accounts.yaml> "
             "[excluded_actions.yaml] [target_name] [roles.yaml] "
-            "[protected_endpoints.yaml] [bfla_baseline_role]"
+            "[protected_endpoints.yaml] [bfla_baseline_role] "
+            "[mass_assignment_keywords.yaml]"
         )
         sys.exit(1)
 
@@ -40,6 +45,7 @@ def main():
     roles_config = sys.argv[5] if len(sys.argv) > 5 else "config/roles.yaml"
     protected_endpoints_config = sys.argv[6] if len(sys.argv) > 6 else "config/protected_endpoints.yaml"
     bfla_baseline_role = sys.argv[7] if len(sys.argv) > 7 else "victim"
+    mass_assignment_keywords_config = sys.argv[8] if len(sys.argv) > 8 else "config/mass_assignment_keywords.yaml"
 
     # --- Preparation commune : discovery, comptes, fixtures ---
 
@@ -85,7 +91,26 @@ def main():
     except FileNotFoundError as exc:
         logger.warning(
             "Detecteur BFLA ignore - configuration manquante (%s). "
-            "Le rapport ne contiendra que les findings BOLA.", exc,
+            "Le rapport ne contiendra pas de findings BFLA.", exc,
+        )
+
+    # --- Detecteur mass assignment ---
+
+    mass_assignment_findings = []
+    try:
+        field_discovery = FieldDiscovery(mass_assignment_keywords_config)
+        ma_detector = MassAssignmentDetector(
+            fixture_manager=fixture_manager,
+            payload_generator=PayloadGenerator(parser.raw_spec),
+            session_manager=session_manager,
+            evidence_store=evidence_store,
+            field_discovery=field_discovery,
+        )
+        mass_assignment_findings = ma_detector.run(fixtures)
+    except FileNotFoundError as exc:
+        logger.warning(
+            "Detecteur mass assignment ignore - configuration manquante (%s). "
+            "Le rapport ne contiendra pas de findings mass assignment.", exc,
         )
 
     # --- Assemblage du rapport ---
@@ -96,15 +121,17 @@ def main():
     )
     report.add_findings(bola_findings)
     report.add_findings(bfla_findings)
+    report.add_findings(mass_assignment_findings)
     report.set_coverage_from_fixtures(fixtures, fixture_manager.failures)
 
     report.export_html("reports/rapport_securite.html")
     report.export_json("reports/rapport_securite.json")
 
-    total = len(bola_findings) + len(bfla_findings)
+    total = len(bola_findings) + len(bfla_findings) + len(mass_assignment_findings)
     print(
         f"\nRapport genere : {total} finding(s) "
-        f"({len(bola_findings)} BOLA, {len(bfla_findings)} BFLA), "
+        f"({len(bola_findings)} BOLA, {len(bfla_findings)} BFLA, "
+        f"{len(mass_assignment_findings)} mass assignment), "
         f"couverture fixtures : {report.coverage.success_rate:.0%}"
     )
     print("  -> reports/rapport_securite.html")
