@@ -6,3 +6,5 @@ Requires-Python: >=3.11
 Requires-Dist: requests
 Requires-Dist: pyyaml
 Requires-Dist: flask
+Provides-Extra: dev
+Requires-Dist: pytest; extra == "dev"

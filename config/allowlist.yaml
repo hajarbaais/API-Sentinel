@@ -1,0 +1,23 @@
+# Cibles explicitement autorisees pour les tests API Sentinel (ENF2).
+#
+# Le framework refuse de lancer le moindre test contre une cible dont
+# la base_url (schema + hote + port) n'apparait pas ici. Une cible de
+# production ou hors perimetre ne doit JAMAIS y figurer sans
+# autorisation ecrite prealable (cf. section 10 du cahier des charges
+# et la charte d'engagement pour toute cible reelle en bug bounty).
+#
+# Format d'une entree :
+#   base_url:          schema://hote:port exact (le chemin est ignore)
+#   authorized_by:      qui a autorise ce test
+#   note:                contexte (optionnel)
+#   authorized_until:   date ISO (AAAA-MM-JJ), optionnelle - passe cette
+#                        date, la cible est de nouveau refusee
+
+authorized_targets:
+  - base_url: "http://localhost:8888"
+    authorized_by: "Hajar BAAIS"
+    note: "Instance OWASP crAPI locale (Docker) - cible de benchmark, aucune donnee reelle."
+
+  - base_url: "http://localhost:8080"
+    authorized_by: "Hajar BAAIS"
+    note: "Fake server local (tests/fake_server.py) - environnement de dev pour les detecteurs."

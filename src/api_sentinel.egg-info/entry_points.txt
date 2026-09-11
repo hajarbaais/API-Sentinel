@@ -1,0 +1,2 @@
+[console_scripts]
+api-sentinel = api_sentinel.cli:main

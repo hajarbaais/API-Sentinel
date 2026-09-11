@@ -6,6 +6,11 @@ import yaml
 from dataclasses import dataclass
 from pathlib import Path
 
+from api_sentinel.guardrails.target_allowlist import (
+    DEFAULT_ALLOWLIST_PATH,
+    TargetAllowlist,
+)
+
 logger = logging.getLogger(__name__)
 
 
@@ -26,14 +31,24 @@ class Account:
 
 
 class SessionManager:
-   
-    def __init__(self, config_path: str):
+
+    def __init__(
+        self,
+        config_path: str,
+        allowlist: TargetAllowlist | None = None,
+        allowlist_path: str = DEFAULT_ALLOWLIST_PATH,
+    ):
         self.config_path = Path(config_path)
         self.config = self._load_config()
         self.base_url = self.config["base_url"]
         self.login_endpoint = self.config["login_endpoint"]
         self.profile_endpoint = self.config.get("profile_endpoint")
         self.accounts: dict[str, Account] = {}
+
+        # ENF2 : aucune requete (login inclus) ne part avant que la
+        # cible n'ait ete verifiee explicitement autorisee.
+        self.allowlist = allowlist or TargetAllowlist(allowlist_path)
+        self.allowlist.enforce(self.base_url)
 
     def _load_config(self) -> dict:
         

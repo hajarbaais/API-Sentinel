@@ -5,6 +5,7 @@ src/api_sentinel/cli.py
 src/api_sentinel.egg-info/PKG-INFO
 src/api_sentinel.egg-info/SOURCES.txt
 src/api_sentinel.egg-info/dependency_links.txt
+src/api_sentinel.egg-info/entry_points.txt
 src/api_sentinel.egg-info/requires.txt
 src/api_sentinel.egg-info/top_level.txt
 src/api_sentinel/accounts/__init__.py
@@ -15,6 +16,7 @@ src/api_sentinel/detectors/base_detector.py
 src/api_sentinel/detectors/bfla.py
 src/api_sentinel/detectors/bola.py
 src/api_sentinel/detectors/excessive_exposure.py
+src/api_sentinel/detectors/field_discovery.py
 src/api_sentinel/detectors/graphql_complexity.py
 src/api_sentinel/detectors/graphql_introspection.py
 src/api_sentinel/detectors/mass_assignment.py
@@ -24,6 +26,7 @@ src/api_sentinel/differential/__init__.py
 src/api_sentinel/differential/comparator.py
 src/api_sentinel/differential/field_sensitivity.py
 src/api_sentinel/differential/noise_filter.py
+src/api_sentinel/differential/role_hierarchy.py
 src/api_sentinel/discovery/__init__.py
 src/api_sentinel/discovery/openapi_parser.py
 src/api_sentinel/evidence/__init__.py
@@ -34,9 +37,11 @@ src/api_sentinel/fixtures/payload_generator.py
 src/api_sentinel/guardrails/__init__.py
 src/api_sentinel/guardrails/target_allowlist.py
 src/api_sentinel/reporting/__init__.py
+src/api_sentinel/reporting/generate_report.py
 src/api_sentinel/reporting/html_report.py
 src/api_sentinel/reporting/json_report.py
 src/api_sentinel/reporting/markdown_report.py
+src/api_sentinel/reporting/report_generator.py
 src/api_sentinel/reporting/sarif_export.py
 src/api_sentinel/scoring/__init__.py
 src/api_sentinel/scoring/confidence.py

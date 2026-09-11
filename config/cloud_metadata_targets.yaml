@@ -1,0 +1,56 @@
+# Endpoints de metadonnees cloud connus (EF8 / OS4).
+#
+# "response_signatures" liste des chaines qui, si presentes dans la
+# reponse HTTP obtenue par la cible, prouvent qu'elle a reellement
+# RECUPERE le contenu du service de metadonnees - et non simplement
+# reflete l'URL soumise en entree (un endpoint "webhook_url" qui
+# renvoie tel quel ce qu'on lui a envoye ne doit jamais compter comme
+# une fuite). Le detecteur ignore automatiquement, au chargement,
+# toute signature qui serait une sous-chaine de l'URL elle-meme.
+#
+# "iam_role_list_url" et "iam_credentials_url_template" (optionnels,
+# AWS uniquement pour l'instant) activent le chainage : une fois cette
+# cible confirmee, le detecteur tente de lister le role IAM de
+# l'instance puis d'en recuperer les identifiants temporaires, pour
+# passer d'une preuve "la cible atteint le service de metadonnees" a
+# une preuve "des identifiants cloud reels ont ete extraits".
+
+cloud_metadata_targets:
+  - provider: "aws"
+    url: "http://169.254.169.254/latest/meta-data/"
+    note: >
+      IMDSv1 - aucun header special requis pour repondre, vecteur reel
+      (breche Capital One, 2019). Racine : liste texte des categories
+      de metadonnees disponibles sur toute instance EC2.
+    response_signatures:
+      - "ami-id"
+      - "ami-launch-index"
+      - "instance-id"
+      - "local-ipv4"
+      - "public-keys/"
+      - "security-groups"
+      - "block-device-mapping"
+    iam_role_list_url: "http://169.254.169.254/latest/meta-data/iam/security-credentials/"
+    iam_credentials_url_template: "http://169.254.169.254/latest/meta-data/iam/security-credentials/{role}"
+
+  - provider: "gcp"
+    url: "http://169.254.169.254/computeMetadata/v1/"
+    note: >
+      Necessite normalement le header "Metadata-Flavor: Google" ajoute
+      cote serveur - positif seulement si le code vulnerable l'ajoute
+      lui-meme (proxy/fetch generique).
+    response_signatures:
+      - "oslogin/"
+      - "service-accounts/"
+      - "project-id"
+
+  - provider: "azure"
+    url: "http://169.254.169.254/metadata/instance?api-version=2021-02-01"
+    note: >
+      Necessite normalement le header "Metadata: true" ajoute cote
+      serveur - meme limite que GCP.
+    response_signatures:
+      - "azEnvironment"
+      - "subscriptionId"
+      - "resourceGroupName"
+      - "vmId"
