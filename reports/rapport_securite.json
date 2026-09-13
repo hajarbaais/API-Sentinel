@@ -1,231 +1,38 @@
 {
-  "target_name": "OWASP crAPI",
-  "target_base_url": "http://localhost:8888",
-  "generated_at": "2026-09-08T12:24:21.339893+00:00",
+  "target_name": "Fake server local",
+  "target_base_url": "http://localhost:8080",
+  "generated_at": "2026-09-13T17:42:42.607986+00:00",
   "summary": {
-    "total_findings": 4,
+    "total_findings": 1,
     "findings_by_severity": {
-      "critical": 2,
-      "high": 2
+      "medium": 1
     },
     "findings_by_detector": {
-      "bola": 2,
-      "bfla": 2
+      "rate_limiting": 1
     },
     "findings_by_owasp_category": {
-      "API1:2023 - Broken Object Level Authorization": 2,
-      "API5:2023 - Broken Function Level Authorization": 2
+      "API4:2023 - Unrestricted Resource Consumption": 1
     }
   },
   "coverage": {
-    "total_creation_endpoints_attempted": 36,
-    "fixtures_created_successfully": 6,
-    "creation_failures": 30,
-    "failure_reasons": [
-      {
-        "endpoint": "/identity/api/v2/user/pictures",
-        "role": "victim",
-        "reason": "Payload non generable (pas de schema JSON exploitable)."
-      },
-      {
-        "endpoint": "/identity/api/v2/user/videos",
-        "role": "victim",
-        "reason": "Payload non generable (pas de schema JSON exploitable)."
-      },
-      {
-        "endpoint": "/identity/api/v2/vehicle/add_vehicle",
-        "role": "victim",
-        "reason": "Code HTTP inattendu : 403 (corps de reponse : {\"message\":\"Sorry, This Vehicle is already added.\",\"status\":403})"
-      },
-      {
-        "endpoint": "/identity/api/v2/vehicle/resend_email",
-        "role": "victim",
-        "reason": "Payload non generable (pas de schema JSON exploitable)."
-      },
-      {
-        "endpoint": "/community/api/v2/coupon/new-coupon",
-        "role": "victim",
-        "reason": "Code HTTP inattendu : 400 (corps de reponse : {\"error\":\"json: cannot unmarshal number into Go struct field Coupon.amount of type string\"}\n)"
-      },
-      {
-        "endpoint": "/community/api/v2/coupon/validate-coupon",
-        "role": "victim",
-        "reason": "Aucun champ d'identifiant reconnu dans la reponse (champs recherches : ['id', 'uuid', '_id', 'objectId']). Cet endpoint a probablement reussi mais n'est pas une creation de ressource identifiable - a ajouter a la liste d'exclusion si confirme."
-      },
-      {
-        "endpoint": "/workshop/api/shop/orders",
-        "role": "victim",
-        "reason": "Code HTTP inattendu : 400 (corps de reponse : {\"message\":\"Insufficient Balance. Please apply coupons to get more balance!\"})"
-      },
-      {
-        "endpoint": "/workshop/api/shop/orders/return_order",
-        "role": "victim",
-        "reason": "Payload non generable (pas de schema JSON exploitable)."
-      },
-      {
-        "endpoint": "/workshop/api/shop/apply_coupon",
-        "role": "victim",
-        "reason": "Code HTTP inattendu : 400 (corps de reponse : {\"message\":\"TRAC075 Coupon code is already claimed by you!! Please try with another coupon code\"})"
-      },
-      {
-        "endpoint": "/workshop/api/merchant/contact_mechanic",
-        "role": "victim",
-        "reason": "Code HTTP inattendu : 400 (corps de reponse : {\"message\":\"Invalid URL 'sentinel-test-8cbd9635': No scheme supplied. Perhaps you meant https://sentinel-test-8cbd9635?\"})"
-      },
-      {
-        "endpoint": "/identity/api/v2/user/pictures",
-        "role": "attacker_same_level",
-        "reason": "Payload non generable (pas de schema JSON exploitable)."
-      },
-      {
-        "endpoint": "/identity/api/v2/user/videos",
-        "role": "attacker_same_level",
-        "reason": "Payload non generable (pas de schema JSON exploitable)."
-      },
-      {
-        "endpoint": "/identity/api/v2/vehicle/add_vehicle",
-        "role": "attacker_same_level",
-        "reason": "Code HTTP inattendu : 403 (corps de reponse : {\"message\":\"Sorry, This Vehicle is already added.\",\"status\":403})"
-      },
-      {
-        "endpoint": "/identity/api/v2/vehicle/resend_email",
-        "role": "attacker_same_level",
-        "reason": "Payload non generable (pas de schema JSON exploitable)."
-      },
-      {
-        "endpoint": "/community/api/v2/coupon/new-coupon",
-        "role": "attacker_same_level",
-        "reason": "Code HTTP inattendu : 400 (corps de reponse : {\"error\":\"json: cannot unmarshal number into Go struct field Coupon.amount of type string\"}\n)"
-      },
-      {
-        "endpoint": "/community/api/v2/coupon/validate-coupon",
-        "role": "attacker_same_level",
-        "reason": "Aucun champ d'identifiant reconnu dans la reponse (champs recherches : ['id', 'uuid', '_id', 'objectId']). Cet endpoint a probablement reussi mais n'est pas une creation de ressource identifiable - a ajouter a la liste d'exclusion si confirme."
-      },
-      {
-        "endpoint": "/workshop/api/shop/orders",
-        "role": "attacker_same_level",
-        "reason": "Code HTTP inattendu : 400 (corps de reponse : {\"message\":\"Insufficient Balance. Please apply coupons to get more balance!\"})"
-      },
-      {
-        "endpoint": "/workshop/api/shop/orders/return_order",
-        "role": "attacker_same_level",
-        "reason": "Payload non generable (pas de schema JSON exploitable)."
-      },
-      {
-        "endpoint": "/workshop/api/shop/apply_coupon",
-        "role": "attacker_same_level",
-        "reason": "Code HTTP inattendu : 400 (corps de reponse : {\"message\":\"TRAC075 Coupon code is already claimed by you!! Please try with another coupon code\"})"
-      },
-      {
-        "endpoint": "/workshop/api/merchant/contact_mechanic",
-        "role": "attacker_same_level",
-        "reason": "Code HTTP inattendu : 400 (corps de reponse : {\"message\":\"Invalid URL 'sentinel-test-2e3eda90': No scheme supplied. Perhaps you meant https://sentinel-test-2e3eda90?\"})"
-      },
-      {
-        "endpoint": "/identity/api/v2/user/pictures",
-        "role": "attacker_lower_level",
-        "reason": "Payload non generable (pas de schema JSON exploitable)."
-      },
-      {
-        "endpoint": "/identity/api/v2/user/videos",
-        "role": "attacker_lower_level",
-        "reason": "Payload non generable (pas de schema JSON exploitable)."
-      },
-      {
-        "endpoint": "/identity/api/v2/vehicle/add_vehicle",
-        "role": "attacker_lower_level",
-        "reason": "Code HTTP inattendu : 403 (corps de reponse : {\"message\":\"Sorry, This Vehicle is already added.\",\"status\":403})"
-      },
-      {
-        "endpoint": "/identity/api/v2/vehicle/resend_email",
-        "role": "attacker_lower_level",
-        "reason": "Payload non generable (pas de schema JSON exploitable)."
-      },
-      {
-        "endpoint": "/community/api/v2/coupon/new-coupon",
-        "role": "attacker_lower_level",
-        "reason": "Code HTTP inattendu : 400 (corps de reponse : {\"error\":\"json: cannot unmarshal number into Go struct field Coupon.amount of type string\"}\n)"
-      },
-      {
-        "endpoint": "/community/api/v2/coupon/validate-coupon",
-        "role": "attacker_lower_level",
-        "reason": "Aucun champ d'identifiant reconnu dans la reponse (champs recherches : ['id', 'uuid', '_id', 'objectId']). Cet endpoint a probablement reussi mais n'est pas une creation de ressource identifiable - a ajouter a la liste d'exclusion si confirme."
-      },
-      {
-        "endpoint": "/workshop/api/shop/orders",
-        "role": "attacker_lower_level",
-        "reason": "Code HTTP inattendu : 400 (corps de reponse : {\"message\":\"Insufficient Balance. Please apply coupons to get more balance!\"})"
-      },
-      {
-        "endpoint": "/workshop/api/shop/orders/return_order",
-        "role": "attacker_lower_level",
-        "reason": "Payload non generable (pas de schema JSON exploitable)."
-      },
-      {
-        "endpoint": "/workshop/api/shop/apply_coupon",
-        "role": "attacker_lower_level",
-        "reason": "Code HTTP inattendu : 400 (corps de reponse : {\"message\":\"TRAC075 Coupon code is already claimed by you!! Please try with another coupon code\"})"
-      },
-      {
-        "endpoint": "/workshop/api/merchant/contact_mechanic",
-        "role": "attacker_lower_level",
-        "reason": "Code HTTP inattendu : 400 (corps de reponse : {\"message\":\"Invalid URL 'sentinel-test-0cf84feb': No scheme supplied. Perhaps you meant https://sentinel-test-0cf84feb?\"})"
-      }
-    ]
+    "total_creation_endpoints_attempted": 3,
+    "fixtures_created_successfully": 3,
+    "creation_failures": 0,
+    "failure_reasons": []
   },
   "findings": [
     {
-      "detector": "bola",
-      "owasp_category": "API1:2023 - Broken Object Level Authorization",
-      "severity": "critical",
-      "confidence": 0.9,
-      "title": "BOLA confirme sur /community/api/v2/community/posts : le role 'attacker_same_level' accede aux donnees du role 'victim'",
-      "description": "2 champ(s) sensible(s) appartenant a la victime ont ete retrouves, avec la meme valeur, dans la reponse obtenue par l'attaquant : nickname, email.",
-      "affected_endpoint": "/community/api/v2/community/posts/kQoVQpLgXJnv2APBLYJfWJ",
-      "evidence_test_id": "bola-00001",
-      "victim_role": "victim",
+      "detector": "rate_limiting",
+      "owasp_category": "API4:2023 - Unrestricted Resource Consumption",
+      "severity": "medium",
+      "confidence": 0.6,
+      "title": "Absence de rate limiting detectee sur GET /health : 5 requetes consecutives acceptees sans throttling.",
+      "description": "5 requetes ont ete envoyees en succession rapide sans qu'aucune ne recoive de code 429 (Too Many Requests). Codes recus : [404]. Cela ne prouve pas une absence totale de limitation (un seuil plus eleve ou une fenetre glissante differente pourrait exister au-dela de cet echantillon volontairement borne), mais suggere qu'aucune protection n'est active a cette echelle - confiance plafonnee en consequence.",
+      "affected_endpoint": "GET /health",
+      "evidence_test_id": "rate_limiting-00008",
+      "victim_role": "N/A",
       "attacker_role": "attacker_same_level",
-      "detected_at": "2026-09-08T12:23:09.283488+00:00"
-    },
-    {
-      "detector": "bola",
-      "owasp_category": "API1:2023 - Broken Object Level Authorization",
-      "severity": "critical",
-      "confidence": 0.9,
-      "title": "BOLA confirme sur /community/api/v2/community/posts : le role 'attacker_lower_level' accede aux donnees du role 'victim'",
-      "description": "2 champ(s) sensible(s) appartenant a la victime ont ete retrouves, avec la meme valeur, dans la reponse obtenue par l'attaquant : nickname, email.",
-      "affected_endpoint": "/community/api/v2/community/posts/kQoVQpLgXJnv2APBLYJfWJ",
-      "evidence_test_id": "bola-00002",
-      "victim_role": "victim",
-      "attacker_role": "attacker_lower_level",
-      "detected_at": "2026-09-08T12:23:11.377565+00:00"
-    },
-    {
-      "detector": "bfla",
-      "owasp_category": "API5:2023 - Broken Function Level Authorization",
-      "severity": "high",
-      "confidence": 0.9,
-      "title": "BFLA confirme sur GET /workshop/api/management/users/all : le role 'attacker_same_level' (privilege inferieur a 'mechanic') a pu executer cette action reservee.",
-      "description": "La baseline avec un compte reellement autorise a reussi. Le meme appel avec le token du role 'attacker_same_level' a egalement reussi (code 200), alors qu'il aurait du etre refuse.",
-      "affected_endpoint": "GET /workshop/api/management/users/all",
-      "evidence_test_id": "",
-      "victim_role": "mechanic",
-      "attacker_role": "attacker_same_level",
-      "detected_at": "2026-09-08T12:23:20.436023+00:00"
-    },
-    {
-      "detector": "bfla",
-      "owasp_category": "API5:2023 - Broken Function Level Authorization",
-      "severity": "high",
-      "confidence": 0.9,
-      "title": "BFLA confirme sur GET /workshop/api/management/users/all : le role 'attacker_lower_level' (privilege inferieur a 'mechanic') a pu executer cette action reservee.",
-      "description": "La baseline avec un compte reellement autorise a reussi. Le meme appel avec le token du role 'attacker_lower_level' a egalement reussi (code 200), alors qu'il aurait du etre refuse.",
-      "affected_endpoint": "GET /workshop/api/management/users/all",
-      "evidence_test_id": "",
-      "victim_role": "mechanic",
-      "attacker_role": "attacker_lower_level",
-      "detected_at": "2026-09-08T12:23:22.652545+00:00"
+      "detected_at": "2026-09-13T17:42:42.607356+00:00"
     }
   ]
 }

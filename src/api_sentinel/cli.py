@@ -12,8 +12,10 @@ import sys
 from api_sentinel.accounts.session_manager import SessionManager
 from api_sentinel.detectors.bfla import BFLADetector
 from api_sentinel.detectors.bola import BOLADetector
+from api_sentinel.detectors.excessive_exposure import ExcessiveExposureDetector
 from api_sentinel.detectors.field_discovery import FieldDiscovery
 from api_sentinel.detectors.mass_assignment import MassAssignmentDetector
+from api_sentinel.detectors.rate_limiting import RateLimitingDetector
 from api_sentinel.detectors.ssrf_cloud import SSRFCloudDetector, URLFieldDiscovery, load_cloud_targets
 from api_sentinel.differential.comparator import DifferentialComparator
 from api_sentinel.differential.field_sensitivity import FieldSensitivityClassifier
@@ -54,6 +56,20 @@ def build_parser() -> argparse.ArgumentParser:
     parser.add_argument("--skip-bfla", action="store_true", help="Desactive le detecteur BFLA.")
     parser.add_argument(
         "--skip-mass-assignment", action="store_true", help="Desactive le detecteur mass assignment."
+    )
+    parser.add_argument(
+        "--skip-excessive-exposure",
+        action="store_true",
+        help="Desactive le detecteur d'exposition excessive de donnees.",
+    )
+    parser.add_argument(
+        "--skip-rate-limiting", action="store_true", help="Desactive le detecteur de rate limiting."
+    )
+    parser.add_argument(
+        "--rate-limiting-request-count",
+        type=int,
+        default=20,
+        help="Nombre de requetes consecutives envoyees pour le test de rate limiting (ENF2 : plafonne).",
     )
     parser.add_argument(
         "--enable-ssrf-cloud",
@@ -131,6 +147,25 @@ def run_scan(args: argparse.Namespace) -> ReportGenerator:
                 "Detecteur mass assignment ignore - configuration manquante (%s).", exc
             )
 
+    excessive_exposure_findings = []
+    if not args.skip_excessive_exposure:
+        sensitivity_for_exposure = FieldSensitivityClassifier(args.sensitive_fields)
+        exposure_detector = ExcessiveExposureDetector(
+            raw_openapi_spec=openapi_parser.raw_spec,
+            sensitivity_classifier=sensitivity_for_exposure,
+            evidence_store=evidence_store,
+        )
+        excessive_exposure_findings = exposure_detector.run(fixtures)
+
+    rate_limiting_findings = []
+    if not args.skip_rate_limiting:
+        rate_limiting_detector = RateLimitingDetector(
+            session_manager=session_manager,
+            evidence_store=evidence_store,
+            request_count=args.rate_limiting_request_count,
+        )
+        rate_limiting_findings = rate_limiting_detector.run(endpoints)
+
     ssrf_findings = []
     if args.enable_ssrf_cloud:
         try:
@@ -157,6 +192,8 @@ def run_scan(args: argparse.Namespace) -> ReportGenerator:
     report.add_findings(bola_findings)
     report.add_findings(bfla_findings)
     report.add_findings(mass_assignment_findings)
+    report.add_findings(excessive_exposure_findings)
+    report.add_findings(rate_limiting_findings)
     report.add_findings(ssrf_findings)
     report.set_coverage_from_fixtures(fixtures, fixture_manager.failures)
 
@@ -183,6 +220,8 @@ def main(argv: list[str] | None = None) -> int:
         f"\nRapport genere : {total} finding(s) "
         f"({by_detector.get('bola', 0)} BOLA, {by_detector.get('bfla', 0)} BFLA, "
         f"{by_detector.get('mass_assignment', 0)} mass assignment, "
+        f"{by_detector.get('excessive_exposure', 0)} exposition excessive, "
+        f"{by_detector.get('rate_limiting', 0)} rate limiting, "
         f"{by_detector.get('ssrf_cloud', 0)} SSRF cloud), "
         f"couverture fixtures : {report.coverage.success_rate:.0%}"
     )

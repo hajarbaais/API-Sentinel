@@ -2,7 +2,7 @@
 <html lang="fr">
 <head>
 <meta charset="UTF-8">
-<title>Rapport API Sentinel - OWASP crAPI</title>
+<title>Rapport API Sentinel - Fake server local</title>
 <style>
     body { font-family: -apple-system, Segoe UI, sans-serif; max-width: 900px; margin: 40px auto; padding: 0 20px; background: #0f1115; color: #e4e4e7; }
     h1 { font-size: 1.8em; border-bottom: 2px solid #333; padding-bottom: 10px; }
@@ -30,91 +30,37 @@
 </style>
 </head>
 <body>
-    <h1>Rapport de securite API - OWASP crAPI</h1>
+    <h1>Rapport de securite API - Fake server local</h1>
     <div class="meta">
-        Cible : http://localhost:8888<br>
-        Genere le : 2026-09-08T12:24:21.339893+00:00
+        Cible : http://localhost:8080<br>
+        Genere le : 2026-09-13T17:42:42.607986+00:00
     </div>
 
     <div class="summary-grid">
         <div class="summary-card">
-            <div class="number">4</div>
+            <div class="number">1</div>
             <div class="label">Finding(s) confirme(s)</div>
         </div>
-        <div class="summary-card"><div class="number">2</div><div class="label">CRITICAL</div></div><div class="summary-card"><div class="number">2</div><div class="label">HIGH</div></div>
+        <div class="summary-card"><div class="number">1</div><div class="label">MEDIUM</div></div>
     </div>
 
     <h2>Findings detailles</h2>
     
-                <div class="finding" style="border-left: 4px solid #7a1f1f;">
+                <div class="finding" style="border-left: 4px solid #a88a1f;">
                     <div class="finding-header">
-                        <span class="severity" style="background:#7a1f1f;">CRITICAL</span>
-                        <span class="confidence">Confiance : 90%</span>
+                        <span class="severity" style="background:#a88a1f;">MEDIUM</span>
+                        <span class="confidence">Confiance : 60%</span>
                     </div>
-                    <h3>BOLA confirme sur /community/api/v2/community/posts : le role 'attacker_same_level' accede aux donnees du role 'victim'</h3>
-                    <p class="category">API1:2023 - Broken Object Level Authorization</p>
-                    <p class="description">2 champ(s) sensible(s) appartenant a la victime ont ete retrouves, avec la meme valeur, dans la reponse obtenue par l'attaquant : nickname, email.</p>
+                    <h3>Absence de rate limiting detectee sur GET /health : 5 requetes consecutives acceptees sans throttling.</h3>
+                    <p class="category">API4:2023 - Unrestricted Resource Consumption</p>
+                    <p class="description">5 requetes ont ete envoyees en succession rapide sans qu'aucune ne recoive de code 429 (Too Many Requests). Codes recus : [404]. Cela ne prouve pas une absence totale de limitation (un seuil plus eleve ou une fenetre glissante differente pourrait exister au-dela de cet echantillon volontairement borne), mais suggere qu'aucune protection n'est active a cette echelle - confiance plafonnee en consequence.</p>
                     <table>
-                        <tr><td>Endpoint</td><td>/community/api/v2/community/posts/kQoVQpLgXJnv2APBLYJfWJ</td></tr>
-                        <tr><td>Detecteur</td><td>bola</td></tr>
-                        <tr><td>Role victime</td><td>victim</td></tr>
+                        <tr><td>Endpoint</td><td>GET /health</td></tr>
+                        <tr><td>Detecteur</td><td>rate_limiting</td></tr>
+                        <tr><td>Role victime</td><td>N/A</td></tr>
                         <tr><td>Role attaquant</td><td>attacker_same_level</td></tr>
-                        <tr><td>ID de preuve</td><td>bola-00001</td></tr>
-                        <tr><td>Detecte le</td><td>2026-09-08T12:23:09.283488+00:00</td></tr>
-                    </table>
-                </div>
-                
-                <div class="finding" style="border-left: 4px solid #7a1f1f;">
-                    <div class="finding-header">
-                        <span class="severity" style="background:#7a1f1f;">CRITICAL</span>
-                        <span class="confidence">Confiance : 90%</span>
-                    </div>
-                    <h3>BOLA confirme sur /community/api/v2/community/posts : le role 'attacker_lower_level' accede aux donnees du role 'victim'</h3>
-                    <p class="category">API1:2023 - Broken Object Level Authorization</p>
-                    <p class="description">2 champ(s) sensible(s) appartenant a la victime ont ete retrouves, avec la meme valeur, dans la reponse obtenue par l'attaquant : nickname, email.</p>
-                    <table>
-                        <tr><td>Endpoint</td><td>/community/api/v2/community/posts/kQoVQpLgXJnv2APBLYJfWJ</td></tr>
-                        <tr><td>Detecteur</td><td>bola</td></tr>
-                        <tr><td>Role victime</td><td>victim</td></tr>
-                        <tr><td>Role attaquant</td><td>attacker_lower_level</td></tr>
-                        <tr><td>ID de preuve</td><td>bola-00002</td></tr>
-                        <tr><td>Detecte le</td><td>2026-09-08T12:23:11.377565+00:00</td></tr>
-                    </table>
-                </div>
-                
-                <div class="finding" style="border-left: 4px solid #a8471f;">
-                    <div class="finding-header">
-                        <span class="severity" style="background:#a8471f;">HIGH</span>
-                        <span class="confidence">Confiance : 90%</span>
-                    </div>
-                    <h3>BFLA confirme sur GET /workshop/api/management/users/all : le role 'attacker_same_level' (privilege inferieur a 'mechanic') a pu executer cette action reservee.</h3>
-                    <p class="category">API5:2023 - Broken Function Level Authorization</p>
-                    <p class="description">La baseline avec un compte reellement autorise a reussi. Le meme appel avec le token du role 'attacker_same_level' a egalement reussi (code 200), alors qu'il aurait du etre refuse.</p>
-                    <table>
-                        <tr><td>Endpoint</td><td>GET /workshop/api/management/users/all</td></tr>
-                        <tr><td>Detecteur</td><td>bfla</td></tr>
-                        <tr><td>Role victime</td><td>mechanic</td></tr>
-                        <tr><td>Role attaquant</td><td>attacker_same_level</td></tr>
-                        <tr><td>ID de preuve</td><td>N/A</td></tr>
-                        <tr><td>Detecte le</td><td>2026-09-08T12:23:20.436023+00:00</td></tr>
-                    </table>
-                </div>
-                
-                <div class="finding" style="border-left: 4px solid #a8471f;">
-                    <div class="finding-header">
-                        <span class="severity" style="background:#a8471f;">HIGH</span>
-                        <span class="confidence">Confiance : 90%</span>
-                    </div>
-                    <h3>BFLA confirme sur GET /workshop/api/management/users/all : le role 'attacker_lower_level' (privilege inferieur a 'mechanic') a pu executer cette action reservee.</h3>
-                    <p class="category">API5:2023 - Broken Function Level Authorization</p>
-                    <p class="description">La baseline avec un compte reellement autorise a reussi. Le meme appel avec le token du role 'attacker_lower_level' a egalement reussi (code 200), alors qu'il aurait du etre refuse.</p>
-                    <table>
-                        <tr><td>Endpoint</td><td>GET /workshop/api/management/users/all</td></tr>
-                        <tr><td>Detecteur</td><td>bfla</td></tr>
-                        <tr><td>Role victime</td><td>mechanic</td></tr>
-                        <tr><td>Role attaquant</td><td>attacker_lower_level</td></tr>
-                        <tr><td>ID de preuve</td><td>N/A</td></tr>
-                        <tr><td>Detecte le</td><td>2026-09-08T12:23:22.652545+00:00</td></tr>
+                        <tr><td>ID de preuve</td><td>rate_limiting-00008</td></tr>
+                        <tr><td>Detecte le</td><td>2026-09-13T17:42:42.607356+00:00</td></tr>
                     </table>
                 </div>
                 
@@ -133,17 +79,14 @@
                 </p>
                 <p class="coverage-rate">
                     Taux de reussite de creation de fixtures :
-                    <strong>6 / 36
-                    (17%)</strong>
+                    <strong>3 / 3
+                    (100%)</strong>
                 </p>
                 <details>
-                    <summary>Detail des 30 echec(s) de creation (30 affiches)</summary>
+                    <summary>Detail des 0 echec(s) de creation (0 affiches)</summary>
                     <table class="failures-table">
                         <tr><th>Endpoint</th><th>Role</th><th>Raison</th></tr>
-                        <tr><td>/identity/api/v2/user/pictures</td><td>victim</td><td>Payload non generable (pas de schema JSON exploitable).</td></tr><tr><td>/identity/api/v2/user/videos</td><td>victim</td><td>Payload non generable (pas de schema JSON exploitable).</td></tr><tr><td>/identity/api/v2/vehicle/add_vehicle</td><td>victim</td><td>Code HTTP inattendu : 403 (corps de reponse : {&quot;message&quot;:&quot;Sorry, This Vehicle is already added.&quot;,&quot;status&quot;:403})</td></tr><tr><td>/identity/api/v2/vehicle/resend_email</td><td>victim</td><td>Payload non generable (pas de schema JSON exploitable).</td></tr><tr><td>/community/api/v2/coupon/new-coupon</td><td>victim</td><td>Code HTTP inattendu : 400 (corps de reponse : {&quot;error&quot;:&quot;json: cannot unmarshal number into Go struct field Coupon.amount of type string&quot;}
-)</td></tr><tr><td>/community/api/v2/coupon/validate-coupon</td><td>victim</td><td>Aucun champ d'identifiant reconnu dans la reponse (champs recherches : ['id', 'uuid', '_id', 'objectId']). Cet endpoint a probablement reussi mais n'est pas une creation de ressource identifiable - a ajouter a la liste d'exclusion si confirme.</td></tr><tr><td>/workshop/api/shop/orders</td><td>victim</td><td>Code HTTP inattendu : 400 (corps de reponse : {&quot;message&quot;:&quot;Insufficient Balance. Please apply coupons to get more balance!&quot;})</td></tr><tr><td>/workshop/api/shop/orders/return_order</td><td>victim</td><td>Payload non generable (pas de schema JSON exploitable).</td></tr><tr><td>/workshop/api/shop/apply_coupon</td><td>victim</td><td>Code HTTP inattendu : 400 (corps de reponse : {&quot;message&quot;:&quot;TRAC075 Coupon code is already claimed by you!! Please try with another coupon code&quot;})</td></tr><tr><td>/workshop/api/merchant/contact_mechanic</td><td>victim</td><td>Code HTTP inattendu : 400 (corps de reponse : {&quot;message&quot;:&quot;Invalid URL 'sentinel-test-8cbd9635': No scheme supplied. Perhaps you meant https://sentinel-test-8cbd9635?&quot;})</td></tr><tr><td>/identity/api/v2/user/pictures</td><td>attacker_same_level</td><td>Payload non generable (pas de schema JSON exploitable).</td></tr><tr><td>/identity/api/v2/user/videos</td><td>attacker_same_level</td><td>Payload non generable (pas de schema JSON exploitable).</td></tr><tr><td>/identity/api/v2/vehicle/add_vehicle</td><td>attacker_same_level</td><td>Code HTTP inattendu : 403 (corps de reponse : {&quot;message&quot;:&quot;Sorry, This Vehicle is already added.&quot;,&quot;status&quot;:403})</td></tr><tr><td>/identity/api/v2/vehicle/resend_email</td><td>attacker_same_level</td><td>Payload non generable (pas de schema JSON exploitable).</td></tr><tr><td>/community/api/v2/coupon/new-coupon</td><td>attacker_same_level</td><td>Code HTTP inattendu : 400 (corps de reponse : {&quot;error&quot;:&quot;json: cannot unmarshal number into Go struct field Coupon.amount of type string&quot;}
-)</td></tr><tr><td>/community/api/v2/coupon/validate-coupon</td><td>attacker_same_level</td><td>Aucun champ d'identifiant reconnu dans la reponse (champs recherches : ['id', 'uuid', '_id', 'objectId']). Cet endpoint a probablement reussi mais n'est pas une creation de ressource identifiable - a ajouter a la liste d'exclusion si confirme.</td></tr><tr><td>/workshop/api/shop/orders</td><td>attacker_same_level</td><td>Code HTTP inattendu : 400 (corps de reponse : {&quot;message&quot;:&quot;Insufficient Balance. Please apply coupons to get more balance!&quot;})</td></tr><tr><td>/workshop/api/shop/orders/return_order</td><td>attacker_same_level</td><td>Payload non generable (pas de schema JSON exploitable).</td></tr><tr><td>/workshop/api/shop/apply_coupon</td><td>attacker_same_level</td><td>Code HTTP inattendu : 400 (corps de reponse : {&quot;message&quot;:&quot;TRAC075 Coupon code is already claimed by you!! Please try with another coupon code&quot;})</td></tr><tr><td>/workshop/api/merchant/contact_mechanic</td><td>attacker_same_level</td><td>Code HTTP inattendu : 400 (corps de reponse : {&quot;message&quot;:&quot;Invalid URL 'sentinel-test-2e3eda90': No scheme supplied. Perhaps you meant https://sentinel-test-2e3eda90?&quot;})</td></tr><tr><td>/identity/api/v2/user/pictures</td><td>attacker_lower_level</td><td>Payload non generable (pas de schema JSON exploitable).</td></tr><tr><td>/identity/api/v2/user/videos</td><td>attacker_lower_level</td><td>Payload non generable (pas de schema JSON exploitable).</td></tr><tr><td>/identity/api/v2/vehicle/add_vehicle</td><td>attacker_lower_level</td><td>Code HTTP inattendu : 403 (corps de reponse : {&quot;message&quot;:&quot;Sorry, This Vehicle is already added.&quot;,&quot;status&quot;:403})</td></tr><tr><td>/identity/api/v2/vehicle/resend_email</td><td>attacker_lower_level</td><td>Payload non generable (pas de schema JSON exploitable).</td></tr><tr><td>/community/api/v2/coupon/new-coupon</td><td>attacker_lower_level</td><td>Code HTTP inattendu : 400 (corps de reponse : {&quot;error&quot;:&quot;json: cannot unmarshal number into Go struct field Coupon.amount of type string&quot;}
-)</td></tr><tr><td>/community/api/v2/coupon/validate-coupon</td><td>attacker_lower_level</td><td>Aucun champ d'identifiant reconnu dans la reponse (champs recherches : ['id', 'uuid', '_id', 'objectId']). Cet endpoint a probablement reussi mais n'est pas une creation de ressource identifiable - a ajouter a la liste d'exclusion si confirme.</td></tr><tr><td>/workshop/api/shop/orders</td><td>attacker_lower_level</td><td>Code HTTP inattendu : 400 (corps de reponse : {&quot;message&quot;:&quot;Insufficient Balance. Please apply coupons to get more balance!&quot;})</td></tr><tr><td>/workshop/api/shop/orders/return_order</td><td>attacker_lower_level</td><td>Payload non generable (pas de schema JSON exploitable).</td></tr><tr><td>/workshop/api/shop/apply_coupon</td><td>attacker_lower_level</td><td>Code HTTP inattendu : 400 (corps de reponse : {&quot;message&quot;:&quot;TRAC075 Coupon code is already claimed by you!! Please try with another coupon code&quot;})</td></tr><tr><td>/workshop/api/merchant/contact_mechanic</td><td>attacker_lower_level</td><td>Code HTTP inattendu : 400 (corps de reponse : {&quot;message&quot;:&quot;Invalid URL 'sentinel-test-0cf84feb': No scheme supplied. Perhaps you meant https://sentinel-test-0cf84feb?&quot;})</td></tr>
+                        
                     </table>
                 </details>
             </section>
