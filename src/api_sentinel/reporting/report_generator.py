@@ -7,6 +7,7 @@ from pathlib import Path
 
 from api_sentinel.detectors.base_detector import Finding
 from api_sentinel.fixtures.fixture_manager import Fixture, FixtureCreationFailure
+from api_sentinel.scoring.risk_scorer import RiskScorer
 
 logger = logging.getLogger(__name__)
 
@@ -43,6 +44,7 @@ class ReportGenerator:
         self.findings: list[Finding] = []
         self.coverage: CoverageStats | None = None
         self.generated_at = datetime.now(timezone.utc).isoformat()
+        self._risk_scorer = RiskScorer()
 
     def add_findings(self, findings: list[Finding]) -> None:
        
@@ -89,14 +91,16 @@ class ReportGenerator:
         )
 
     def to_dict(self) -> dict:
-        
+
         summary = self._build_summary()
+        risk_score = self._risk_scorer.score(self.findings)
 
         return {
             "target_name": self.target_name,
             "target_base_url": self.target_base_url,
             "generated_at": self.generated_at,
             "summary": asdict(summary),
+            "risk_score": risk_score.to_dict(),
             "coverage": asdict(self.coverage) if self.coverage else None,
             "findings": [
                 {
@@ -136,6 +140,7 @@ class ReportGenerator:
 
     def _render_html(self) -> str:
         summary = self._build_summary()
+        risk_score = self._risk_scorer.score(self.findings)
 
         severity_colors = {
             "critical": "#7a1f1f",
@@ -144,6 +149,16 @@ class ReportGenerator:
             "low": "#4a7a2f",
             "info": "#3a5a7a",
         }
+        risk_level_colors = {
+            "critical": "#7a1f1f",
+            "high": "#a8471f",
+            "medium": "#a88a1f",
+            "low": "#4a7a2f",
+            "minimal": "#2a2d33",
+        }
+
+        risk_score_html = self._render_risk_score_html(risk_score, risk_level_colors)
+        manual_review_html = self._render_manual_review_html(risk_score)
 
         findings_html = ""
         if not self.findings:
@@ -236,6 +251,18 @@ class ReportGenerator:
     .coverage-rate {{ font-size: 1.1em; }}
     .failures-table th {{ color: #999; }}
     details summary {{ cursor: pointer; color: #8ab4f8; margin-top: 10px; }}
+    .risk-score {{ margin: 30px 0; }}
+    .overall-score {{ background: #1c1f26; border-radius: 8px; padding: 20px 24px; display: flex; align-items: baseline; gap: 16px; margin-bottom: 12px; }}
+    .overall-number {{ font-size: 2.6em; font-weight: bold; }}
+    .overall-max {{ font-size: 0.4em; color: #999; }}
+    .overall-level {{ font-size: 1.1em; font-weight: bold; letter-spacing: 0.05em; }}
+    .category-scores {{ display: flex; flex-direction: column; gap: 8px; }}
+    .category-score {{ display: flex; justify-content: space-between; align-items: center; background: #1c1f26; border-radius: 6px; padding: 10px 16px; }}
+    .category-name {{ color: #ccc; }}
+    .category-badge {{ color: white; padding: 3px 10px; border-radius: 4px; font-size: 0.85em; font-weight: bold; }}
+    .manual-review-warning {{ background: #201c26; border-left: 4px solid #6a4fa8; border-radius: 6px; padding: 18px 20px; margin-top: 30px; }}
+    .manual-review-table {{ margin-top: 10px; }}
+    .manual-review-table th {{ color: #999; }}
 </style>
 </head>
 <body>
@@ -253,12 +280,69 @@ class ReportGenerator:
         {"".join(f'<div class="summary-card"><div class="number">{count}</div><div class="label">{sev.upper()}</div></div>' for sev, count in summary.findings_by_severity.items())}
     </div>
 
+    {risk_score_html}
+
     <h2>Findings detailles</h2>
     {findings_html}
+
+    {manual_review_html}
 
     {coverage_html}
 </body>
 </html>"""
+
+    def _render_risk_score_html(self, risk_score, risk_level_colors: dict) -> str:
+        overall_color = risk_level_colors.get(risk_score.overall_risk_level.value, "#555")
+        category_rows = "".join(
+            f"""<div class="category-score">
+                <span class="category-name">{self._escape(c.category.value)}</span>
+                <span class="category-badge" style="background:{risk_level_colors.get(c.risk_level.value, '#555')};">
+                    {c.score:.0f}/100 - {c.risk_level.value.upper()} ({c.finding_count} finding(s))
+                </span>
+            </div>"""
+            for c in risk_score.by_category
+        )
+        if not category_rows:
+            category_rows = "<p class='no-findings'>Aucune categorie a risque (aucun finding confirme).</p>"
+
+        return f"""
+        <section class="risk-score">
+            <h2>Score de risque agrege (OWASP API Top 10)</h2>
+            <div class="overall-score" style="border-left: 4px solid {overall_color};">
+                <div class="overall-number">{risk_score.overall_score:.0f}<span class="overall-max">/100</span></div>
+                <div class="overall-level" style="color:{overall_color};">{risk_score.overall_risk_level.value.upper()}</div>
+            </div>
+            <div class="category-scores">
+                {category_rows}
+            </div>
+        </section>
+        """
+
+    def _render_manual_review_html(self, risk_score) -> str:
+        findings = risk_score.findings_requiring_manual_review
+        if not findings:
+            return ""
+
+        rows = "".join(
+            f"<tr><td>{self._escape(f.detector)}</td>"
+            f"<td>{self._escape(f.title)}</td>"
+            f"<td>{f.confidence:.0%}</td></tr>"
+            for f in findings
+        )
+        return f"""
+        <section class="manual-review-warning">
+            <h2>Cas ambigus - revue manuelle recommandee (ENF1)</h2>
+            <p>
+                Ces findings sont confirmes mais avec une confiance faible (&lt; 60%) :
+                ni un faux positif assume, ni une preuve suffisamment solide pour etre
+                traite comme les autres findings sans verification humaine.
+            </p>
+            <table class="manual-review-table">
+                <tr><th>Detecteur</th><th>Finding</th><th>Confiance</th></tr>
+                {rows}
+            </table>
+        </section>
+        """
 
     @staticmethod
     def _escape(text: str) -> str:
