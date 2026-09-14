@@ -1,0 +1,8 @@
+# Secrets - ne jamais committer (ENF5)
+.env
+
+# Python
+__pycache__/
+*.pyc
+.pytest_cache/
+*.egg-info/

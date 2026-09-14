@@ -11,8 +11,11 @@ Deux aspects critiques a couvrir sans reseau :
      refleter l'URL soumise compterait a tort comme vulnerable.
 """
 
+from types import SimpleNamespace
+
 from api_sentinel.detectors.ssrf_cloud import (
     CloudMetadataTarget,
+    SSRFCloudDetector,
     URLFieldDiscovery,
     extract_role_name,
     summarize_credentials,
@@ -285,3 +288,69 @@ def test_summarize_credentials_without_token_or_expiration():
 
     assert proof["session_token_present"] is False
     assert proof["expiration"] is None
+
+
+# --- _evaluate : signal faible sur timeout (constate empiriquement sur
+# crAPI/contact_mechanic : une tentative de connexion sortante reelle
+# depuis un environnement sans metadonnees cloud reelles peut mettre
+# plusieurs dizaines de secondes a echouer, au-dela du timeout client) ---
+
+class _FakeEvidenceStore:
+    def __init__(self):
+        self.records = []
+
+    def record(self, **kwargs):
+        self.records.append(kwargs)
+        return SimpleNamespace(test_id="fake-evidence-001")
+
+
+def _bare_detector():
+    detector = SSRFCloudDetector.__new__(SSRFCloudDetector)
+    detector.evidence_store = _FakeEvidenceStore()
+    detector.findings = []
+    detector.request_timeout = 35
+    return detector
+
+
+def _fake_call_context():
+    target = CloudMetadataTarget(
+        provider="aws", url="http://169.254.169.254/latest/meta-data/",
+        response_signatures=["ami-id"],
+    )
+    endpoint = SimpleNamespace(method="POST", path="/workshop/api/merchant/contact_mechanic")
+    account = SimpleNamespace(
+        base_url="http://localhost:8888", role="attacker_same_level", auth_headers=lambda: {}
+    )
+    return target, endpoint, account
+
+
+def test_timeout_on_cloud_target_yields_a_low_confidence_weak_signal_finding():
+    detector = _bare_detector()
+    target, endpoint, account = _fake_call_context()
+
+    detector._evaluate(
+        response=None, timed_out=True, target=target, endpoint=endpoint, account=account,
+        injection_point="body:mechanic_api", params=None,
+        json_body={"mechanic_api": target.url}, rebuild=lambda u: (None, {}),
+    )
+
+    assert len(detector.findings) == 1
+    finding = detector.findings[0]
+    assert finding.confidence == 0.4
+    assert finding.severity.value == "medium"
+    assert "NON confirme" in finding.title
+    assert len(detector.evidence_store.records) == 1
+
+
+def test_non_timeout_network_error_yields_no_finding_at_all():
+    detector = _bare_detector()
+    target, endpoint, account = _fake_call_context()
+
+    detector._evaluate(
+        response=None, timed_out=False, target=target, endpoint=endpoint, account=account,
+        injection_point="body:mechanic_api", params=None,
+        json_body={"mechanic_api": target.url}, rebuild=lambda u: (None, {}),
+    )
+
+    assert detector.findings == []
+    assert detector.evidence_store.records == []

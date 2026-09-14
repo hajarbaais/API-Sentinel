@@ -40,6 +40,21 @@ C'est le detecteur le plus sensible du framework (risque d'exposition
 reelle d'identifiants cloud si la cible est vulnerable) : il
 re-verifie explicitement l'allowlist avant de s'executer, en plus de
 la verification deja faite par SessionManager (ENF2, EF8).
+
+Timeout volontairement genereux (35s par defaut) : constate
+empiriquement sur crAPI (endpoint contact_mechanic/mechanic_api,
+23.4s mesures), une cible qui tente reellement de contacter
+169.254.169.254 depuis un environnement sans metadonnees cloud reelles
+(Docker local, pas une vraie instance AWS/GCP/Azure) met plusieurs
+secondes a echouer proprement cote serveur. Un timeout client trop
+court (6s initialement, puis 20s - encore insuffisant, mesure sur le
+fil) coupe la connexion avant que le serveur n'ait fini sa propre
+tentative - le test echoue silencieusement (aucune preuve enregistree)
+sans que ce soit une absence de vulnerabilite. Limite residuelle
+documentee : sur une cible non hebergee sur du vrai cloud, la
+CONFIRMATION par signature de contenu reste structurellement
+impossible (aucune vraie reponse de metadonnees a recevoir), meme avec
+un timeout suffisant pour observer l'echec cote serveur.
 """
 
 import logging
@@ -314,7 +329,7 @@ class SSRFCloudDetector:
         evidence_store: EvidenceStore,
         url_field_discovery: URLFieldDiscovery,
         cloud_targets: list[CloudMetadataTarget],
-        request_timeout: int = 6,
+        request_timeout: int = 35,
     ):
         self.fixture_manager = fixture_manager
         self.payload_generator = payload_generator
@@ -370,11 +385,11 @@ class SSRFCloudDetector:
                     return self._build_query_params(_endpoint, _field, injected_url), None
 
                 params, json_body = rebuild(target.url)
-                response = self._send(endpoint.method, endpoint.path, account, params, json_body)
+                response, timed_out = self._send(endpoint.method, endpoint.path, account, params, json_body)
                 self._evaluate(
-                    response=response, target=target, endpoint=endpoint, account=account,
-                    injection_point=f"query:{field_name}", params=params, json_body=json_body,
-                    rebuild=rebuild,
+                    response=response, timed_out=timed_out, target=target, endpoint=endpoint,
+                    account=account, injection_point=f"query:{field_name}",
+                    params=params, json_body=json_body, rebuild=rebuild,
                 )
 
     def _build_query_params(self, endpoint: Endpoint, injected_field: str, injected_value: str) -> dict:
@@ -415,33 +430,46 @@ class SSRFCloudDetector:
                     return None, payload
 
                 params, json_body = rebuild(target.url)
-                response = self._send(endpoint.method, endpoint.path, account, params, json_body)
+                response, timed_out = self._send(endpoint.method, endpoint.path, account, params, json_body)
                 self._evaluate(
-                    response=response, target=target, endpoint=endpoint, account=account,
-                    injection_point=f"body:{field_name}", params=params, json_body=json_body,
-                    rebuild=rebuild,
+                    response=response, timed_out=timed_out, target=target, endpoint=endpoint,
+                    account=account, injection_point=f"body:{field_name}",
+                    params=params, json_body=json_body, rebuild=rebuild,
                 )
 
     def _send(
         self, method: str, path: str, account: Account,
         params: Optional[dict], json_body: Optional[dict],
-    ) -> Optional[requests.Response]:
+    ) -> tuple[Optional[requests.Response], bool]:
+        """Retourne (reponse, timed_out) - timed_out distingue un depassement
+        de delai (signal faible d'une connexion sortante reelle, cf. plus
+        bas) d'une autre erreur reseau (connexion refusee, DNS...), qui
+        n'apporte aucune preuve."""
         url = f"{account.base_url}{path}"
         try:
-            return requests.request(
+            response = requests.request(
                 method, url,
                 headers=account.auth_headers(),
                 params=params,
                 json=json_body,
                 timeout=self.request_timeout,
             )
+            return response, False
+        except requests.Timeout:
+            logger.debug(
+                "Timeout (%ss) lors du test SSRF sur %s - signal faible "
+                "possible d'une connexion sortante reelle en cours.",
+                self.request_timeout, url,
+            )
+            return None, True
         except requests.RequestException as exc:
             logger.debug("Erreur reseau lors du test SSRF sur %s : %s", url, exc)
-            return None
+            return None, False
 
     def _evaluate(
         self,
         response: Optional[requests.Response],
+        timed_out: bool,
         target: CloudMetadataTarget,
         endpoint: Endpoint,
         account: Account,
@@ -451,6 +479,11 @@ class SSRFCloudDetector:
         rebuild,
     ) -> None:
         if response is None:
+            if timed_out:
+                self._record_timeout_signal(
+                    target=target, endpoint=endpoint, account=account,
+                    injection_point=injection_point, params=params, json_body=json_body,
+                )
             return
 
         matched_signatures = target.matches(response.text)
@@ -482,6 +515,65 @@ class SSRFCloudDetector:
                 injection_point=injection_point, rebuild=rebuild,
             )
 
+    def _record_timeout_signal(
+        self, target: CloudMetadataTarget, endpoint: Endpoint, account: Account,
+        injection_point: str, params: Optional[dict], json_body: Optional[dict],
+    ) -> None:
+        """
+        Un depassement du timeout (deliberement genereux, cf. docstring du
+        module) en injectant une URL de metadonnees cloud est un signal
+        FAIBLE mais reel : un champ qui se contente d'un echo ou d'une
+        validation locale repond en millisecondes, jamais en dizaines de
+        secondes. Enregistre comme finding distinct, severite et confiance
+        nettement plus basses qu'une confirmation par signature de contenu
+        (ENF1) - a verifier manuellement (ex: capture reseau cote serveur).
+        """
+        evidence = self.evidence_store.record(
+            detector=self.DETECTOR_NAME,
+            request_method=endpoint.method,
+            request_url=f"{account.base_url}{endpoint.path}",
+            request_headers=account.auth_headers(),
+            request_body=json_body if json_body is not None else params,
+            response_status=0,
+            response_body={
+                "note": f"Timeout client apres {self.request_timeout}s, aucune reponse recue."
+            },
+            finding_confirmed=True,
+        )
+
+        finding = Finding(
+            detector=self.DETECTOR_NAME,
+            owasp_category=OwaspCategory.SSRF,
+            severity=Severity.MEDIUM,
+            confidence=0.4,
+            title=(
+                f"SSRF probable (NON confirme par contenu) sur "
+                f"{endpoint.method} {endpoint.path} : le champ "
+                f"'{injection_point}' a provoque un depassement de delai "
+                f"({self.request_timeout}s) en pointant vers "
+                f"{target.url} ({target.provider.upper()})."
+            ),
+            description=(
+                f"Aucune reponse recue apres {self.request_timeout}s alors que "
+                f"les autres requetes a cette cible repondent normalement en "
+                f"quelques centaines de millisecondes. Un champ qui se "
+                f"contente d'un echo ou d'une validation locale ne peut pas "
+                f"provoquer un tel delai - ce comportement suggere fortement "
+                f"une tentative de connexion sortante reelle vers l'URL "
+                f"injectee, meme si son contenu (donc la preuve forte de "
+                f"metadonnees exposees) n'a pas pu etre recupere dans le "
+                f"delai imparti. A verifier manuellement (augmenter encore "
+                f"le timeout, ou capturer le trafic sortant du serveur) "
+                f"avant de considerer ce finding comme une preuve definitive."
+            ),
+            affected_endpoint=f"{endpoint.method} {endpoint.path}",
+            evidence_test_id=evidence.test_id,
+            victim_role="N/A",
+            attacker_role=account.role,
+        )
+        self.findings.append(finding)
+        logger.warning("FINDING CONFIRME (signal faible) : %s", finding.title)
+
     def _attempt_iam_credential_extraction(
         self, endpoint: Endpoint, account: Account, target: CloudMetadataTarget,
         injection_point: str, rebuild,
@@ -493,7 +585,7 @@ class SSRFCloudDetector:
         )
 
         role_params, role_json = rebuild(target.iam_role_list_url)
-        role_response = self._send(endpoint.method, endpoint.path, account, role_params, role_json)
+        role_response, _ = self._send(endpoint.method, endpoint.path, account, role_params, role_json)
         if role_response is None:
             return
 
@@ -508,7 +600,7 @@ class SSRFCloudDetector:
 
         creds_url = target.iam_credentials_url_template.format(role=role_name)
         creds_params, creds_json = rebuild(creds_url)
-        creds_response = self._send(endpoint.method, endpoint.path, account, creds_params, creds_json)
+        creds_response, _ = self._send(endpoint.method, endpoint.path, account, creds_params, creds_json)
         if creds_response is None:
             return
 

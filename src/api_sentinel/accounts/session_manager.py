@@ -10,6 +10,7 @@ from api_sentinel.guardrails.target_allowlist import (
     DEFAULT_ALLOWLIST_PATH,
     TargetAllowlist,
 )
+from api_sentinel.security.secrets_vault import SecretsVault
 
 logger = logging.getLogger(__name__)
 
@@ -51,14 +52,38 @@ class SessionManager:
         self.allowlist.enforce(self.base_url)
 
     def _load_config(self) -> dict:
-        
+
         if not self.config_path.exists():
             raise FileNotFoundError(
                 f"Fichier de configuration introuvable : {self.config_path}"
             )
 
         content = self.config_path.read_text(encoding="utf-8")
-        return yaml.safe_load(content)
+        config = yaml.safe_load(content)
+        return self._decrypt_passwords_if_needed(config)
+
+    def _decrypt_passwords_if_needed(self, config: dict) -> dict:
+        """
+        ENF5 : dechiffre les mots de passe chiffres par SecretsVault
+        (prefixe 'vault:v1:'). Le coffre-fort n'est instancie - et
+        donc la variable d'environnement API_SENTINEL_VAULT_KEY
+        exigee - que si le fichier contient effectivement au moins un
+        mot de passe chiffre, pour ne pas casser une configuration
+        encore en clair (migration progressive, cf. secrets_vault.py).
+        """
+        accounts = config.get("accounts", {})
+        if not any(
+            SecretsVault.is_encrypted(credentials.get("password", ""))
+            for credentials in accounts.values()
+        ):
+            return config
+
+        vault = SecretsVault()
+        for credentials in accounts.values():
+            password = credentials.get("password")
+            if password is not None and SecretsVault.is_encrypted(password):
+                credentials["password"] = vault.decrypt(password)
+        return config
 
     def authenticate_all(self) -> dict[str, Account]:
       

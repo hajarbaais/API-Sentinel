@@ -1,0 +1,191 @@
+{
+  "target": "OWASP crAPI",
+  "source": "https://raw.githubusercontent.com/OWASP/crAPI/develop/docs/challenges.md",
+  "source_fetched_at": "2026-09-13",
+  "methodology_note": "Chaque entree porte un 'predicted_outcome' (tp/fn) ecrit AVANT execution du benchmark, avec sa justification technique (rationale). Le script run_benchmark.py compare ce pronostic au resultat reel observe - un pronostic 'fn' n'exclut jamais l'entree du calcul du recall, il documente juste pourquoi on s'attend a un manque, pour discussion dans le memoire. Les entrees hors perimetre des detecteurs (in_scope=false) sont exclues du recall car elles ne relevent d'aucune classe de vulnerabilite couverte par le framework (cf. cahier des charges section 3, 'Exclu').",
+  "vulnerabilities": [
+    {
+      "id": "crapi-1",
+      "challenge_name": "Access details of another user's vehicle",
+      "in_scope": true,
+      "owasp_category": "API1:2023 - Broken Object Level Authorization",
+      "detector": "bola",
+      "endpoint": "GET /identity/api/v2/vehicle/{vehicleId}/location",
+      "predicted_outcome": "fn",
+      "rationale": "L'endpoint de creation associe (/identity/api/v2/vehicle/add_vehicle) ne prefixe pas le chemin de l'endpoint de detail (/identity/api/v2/vehicle/{vehicleId}/location) - FixtureManager._match_detail_endpoint() (matching par prefixe de chemin) ne peut donc pas relier une fixture creee a cet endpoint, qui n'est jamais teste par le detecteur BOLA en l'etat."
+    },
+    {
+      "id": "crapi-2",
+      "challenge_name": "Access mechanic reports of other users",
+      "in_scope": true,
+      "owasp_category": "API1:2023 - Broken Object Level Authorization",
+      "detector": "bola",
+      "endpoint": "GET /workshop/api/mechanic/mechanic_report",
+      "predicted_outcome": "fn",
+      "rationale": "L'identifiant de la ressource ('report_id') est passe en parametre de query, pas dans le chemin. Le detecteur BOLA (comme FixtureManager) ne teste que les endpoints de detail avec un parametre de CHEMIN - un IDOR via query string n'est pas dans le perimetre actuel."
+    },
+    {
+      "id": "crapi-3",
+      "challenge_name": "Reset the password of a different user",
+      "in_scope": false,
+      "owasp_category": "API2:2023 - Broken Authentication",
+      "detector": null,
+      "endpoint": "POST /identity/api/auth/forget-password",
+      "predicted_outcome": "not_applicable",
+      "rationale": "Broken Authentication (brute force sur un flux de reset password) n'est couvert par aucun detecteur du framework - hors perimetre explicite (cahier des charges section 3)."
+    },
+    {
+      "id": "crapi-4",
+      "challenge_name": "Find an API endpoint that leaks sensitive information of other users",
+      "in_scope": false,
+      "owasp_category": "API3:2023 - Broken Object Property Level Authorization",
+      "detector": "excessive_exposure",
+      "endpoint": null,
+      "predicted_outcome": "not_applicable",
+      "rationale": "La description officielle du challenge ne precise pas d'endpoint concret (challenge en boite noire par design) - impossible de la cartographier avec certitude sans exploration manuelle supplementaire. Exclue du ground truth mesurable plutot que devinee."
+    },
+    {
+      "id": "crapi-5",
+      "challenge_name": "Find an API endpoint that leaks an internal property of a video",
+      "in_scope": true,
+      "owasp_category": "API3:2023 - Broken Object Property Level Authorization",
+      "detector": "excessive_exposure",
+      "endpoint": "GET /identity/api/v2/user/videos/{video_id}",
+      "predicted_outcome": "fn",
+      "rationale": "Le champ interne vise ('conversion_params', parametres de conversion video) est deja declare dans le schema de reponse officiel (components.schemas.ProfileVideo) de la spec OpenAPI utilisee comme reference. Le detecteur excessive_exposure ne signale que les champs ABSENTS du schema declare - un champ deja documente dans la spec, meme s'il est cache du client typique (l'app mobile), ne peut structurellement pas etre detecte par une comparaison schema-vs-reponse. Limite methodologique fondamentale de l'approche, pas un bug corrigible facilement."
+    },
+    {
+      "id": "crapi-6",
+      "challenge_name": "Perform a layer 7 DoS using 'contact mechanic' feature",
+      "in_scope": true,
+      "owasp_category": "API4:2023 - Unrestricted Resource Consumption",
+      "detector": "rate_limiting",
+      "endpoint": "POST /workshop/api/merchant/contact_mechanic",
+      "predicted_outcome": "fn",
+      "rationale": "Le detecteur rate_limiting ne teste que des endpoints GET (ENF2 - eviter les effets de bord d'une rafale de POST sur un endpoint qui declenche une action reelle). Ce challenge cible precisement un endpoint POST, hors du perimetre volontairement restreint du detecteur actuel."
+    },
+    {
+      "id": "crapi-7",
+      "challenge_name": "Delete a video of another user",
+      "in_scope": true,
+      "owasp_category": "API5:2023 - Broken Function Level Authorization",
+      "detector": "bfla",
+      "endpoint": "DELETE /identity/api/v2/admin/videos/{video_id}",
+      "predicted_outcome": "fn",
+      "rationale": "Le detecteur BFLA ne teste que les endpoints explicitement declares dans protected_endpoints_crapi.yaml, qui n'en contient qu'un seul actuellement (/workshop/api/management/users/all). Cet endpoint admin n'y est pas encore ajoute, et aucun compte de test avec un role verifie 'admin' n'existe dans accounts_crapi.yaml pour servir de baseline - gap de configuration documente, pas une limite du detecteur lui-meme."
+    },
+    {
+      "id": "crapi-8",
+      "challenge_name": "Get an item for free (return order abuse)",
+      "in_scope": true,
+      "owasp_category": "API3:2023 - Broken Object Property Level Authorization",
+      "detector": "mass_assignment",
+      "endpoint": "POST /workshop/api/shop/orders/return_order",
+      "predicted_outcome": "fn",
+      "rationale": "L'endpoint est bien dans le perimetre du detecteur (POST sans parametre de chemin). Mais mass_assignment n'injecte que des champs suspects decouverts DYNAMIQUEMENT dans les reponses de creation de fixtures (field_discovery) - le ou les champs pertinents pour ce challenge (statut de remboursement, montant) ne sont probablement pas observables dans une reponse de creation de commande standard, donc jamais decouverts comme candidats a tester ici."
+    },
+    {
+      "id": "crapi-9",
+      "challenge_name": "Increase your balance by $1,000 or more",
+      "in_scope": true,
+      "owasp_category": "API3:2023 - Broken Object Property Level Authorization",
+      "detector": "mass_assignment",
+      "endpoint": "POST /workshop/api/shop/orders/return_order",
+      "predicted_outcome": "fn",
+      "rationale": "Meme cause que crapi-8 : variante du meme abus sur le meme endpoint, hors d'atteinte de la decouverte dynamique de champs pour la meme raison."
+    },
+    {
+      "id": "crapi-10",
+      "challenge_name": "Update internal video properties",
+      "in_scope": true,
+      "owasp_category": "API3:2023 - Broken Object Property Level Authorization",
+      "detector": "mass_assignment",
+      "endpoint": "PUT /identity/api/v2/user/videos/{video_id}",
+      "predicted_outcome": "fn",
+      "rationale": "Le detecteur mass assignment ne teste que les endpoints de CREATION (POST sans parametre de chemin) - jamais un PUT de mise a jour sur une ressource existante. Ce challenge cible precisement une mise a jour, hors du perimetre actuel du detecteur."
+    },
+    {
+      "id": "crapi-11",
+      "challenge_name": "Make crAPI send an HTTP call to an arbitrary URL",
+      "in_scope": true,
+      "owasp_category": "API7:2023 - Server Side Request Forgery",
+      "detector": "ssrf_cloud",
+      "endpoint": "POST /workshop/api/merchant/contact_mechanic",
+      "predicted_outcome": "tp",
+      "rationale": "Champ 'mechanic_api' detecte via l'heuristique de valeur d'exemple de URLFieldDiscovery (aucun format 'uri' ni mot-cle dans le nom, mais l'exemple officiel de la spec est une URL complete). CONFIRME EN CONDITIONS REELLES le 2026-09-13 contre crAPI local, mais pas par la voie initialement prevue (signature de contenu de metadonnees) : la cible met plus de 35s a echouer sa propre tentative de connexion sortante vers 169.254.169.254 (mesure directe : 23.4s sur un essai isole), largement au-dela d'un timeout initial de 6s puis 20s qui faisaient manquer la preuve silencieusement. Comme aucune vraie infrastructure cloud n'est joignable depuis un Docker local, la confirmation par CONTENU reste structurellement impossible ici - le detecteur a ete etendu pour traiter un timeout specifique sur une cible cloud comme un signal FAIBLE distinct (severite MEDIUM, confiance 0.4, explicitement marque 'NON confirme par contenu'), plutot que de rater silencieusement une vulnerabilite reelle. Les 3 cibles (AWS/GCP/Azure) ont toutes produit ce signal. Limite assumee : ce n'est pas une preuve aussi forte qu'un rejeu BOLA reussi - une verification manuelle (capture reseau, timeout encore plus long, ou test contre une cible reellement hebergee sur du cloud) reste necessaire pour une confirmation definitive."
+    },
+    {
+      "id": "crapi-12",
+      "challenge_name": "Get free coupons without knowing the coupon code (NoSQL injection)",
+      "in_scope": false,
+      "owasp_category": "API8:2023 - Security Misconfiguration",
+      "detector": null,
+      "endpoint": "POST /community/api/v2/coupon/validate-coupon",
+      "predicted_outcome": "not_applicable",
+      "rationale": "Injection NoSQL - hors perimetre explicite du framework (cahier des charges section 3 : 'decouverte de nouvelles classes de vulnerabilites non prevues par les detecteurs concus')."
+    },
+    {
+      "id": "crapi-13",
+      "challenge_name": "Redeem an already-claimed coupon via SQL injection",
+      "in_scope": false,
+      "owasp_category": "API8:2023 - Security Misconfiguration",
+      "detector": null,
+      "endpoint": null,
+      "predicted_outcome": "not_applicable",
+      "rationale": "Injection SQL - hors perimetre explicite du framework."
+    },
+    {
+      "id": "crapi-14",
+      "challenge_name": "Find an endpoint without authentication checks",
+      "in_scope": false,
+      "owasp_category": "API2:2023 - Broken Authentication",
+      "detector": null,
+      "endpoint": null,
+      "predicted_outcome": "not_applicable",
+      "rationale": "Aucun detecteur du framework ne verifie systematiquement l'absence totale de controle d'authentification sur l'ensemble des endpoints - hors perimetre actuel."
+    },
+    {
+      "id": "crapi-15",
+      "challenge_name": "Forge a valid JWT token",
+      "in_scope": false,
+      "owasp_category": "API2:2023 - Broken Authentication",
+      "detector": null,
+      "endpoint": null,
+      "predicted_outcome": "not_applicable",
+      "rationale": "Cryptanalyse/forgerie JWT - hors perimetre explicite du framework."
+    },
+    {
+      "id": "crapi-16",
+      "challenge_name": "Prompt injection via chatbot",
+      "in_scope": false,
+      "owasp_category": "LLM01 - Prompt Injection (hors OWASP API Top 10)",
+      "detector": null,
+      "endpoint": null,
+      "predicted_outcome": "not_applicable",
+      "rationale": "Vulnerabilites specifiques aux LLM - hors perimetre explicite du framework (qui cible l'OWASP API Security Top 10, pas l'OWASP LLM Top 10)."
+    },
+    {
+      "id": "crapi-17",
+      "challenge_name": "Extract another user's credentials via chatbot",
+      "in_scope": false,
+      "owasp_category": "LLM06 - Sensitive Information Disclosure (hors OWASP API Top 10)",
+      "detector": null,
+      "endpoint": null,
+      "predicted_outcome": "not_applicable",
+      "rationale": "Vulnerabilites specifiques aux LLM - hors perimetre explicite du framework."
+    },
+    {
+      "id": "crapi-18",
+      "challenge_name": "Make the chatbot act on behalf of another user",
+      "in_scope": false,
+      "owasp_category": "LLM - Excessive Agency (hors OWASP API Top 10)",
+      "detector": null,
+      "endpoint": null,
+      "predicted_outcome": "not_applicable",
+      "rationale": "Vulnerabilites specifiques aux LLM - hors perimetre explicite du framework."
+    }
+  ],
+  "excluded_from_ground_truth": [
+    "3 challenges secrets non documentes publiquement par crAPI (mentionnes dans challenges.md sans details) - ne peuvent pas etre integres a un ground truth verifiable."
+  ]
+}

@@ -1,16 +1,15 @@
-base_url: "http://localhost:8888"
-login_endpoint: "/identity/api/auth/login"
-
+base_url: http://localhost:8888
+login_endpoint: /identity/api/auth/login
 accounts:
   victim:
-    email: "victim@crapi.test"
-    password: "TestPassword123!"
+    email: victim@crapi.test
+    password: vault:v1:kGmdpK7zvXDwofMkMVMA3-UnjszOO-d1mU1hKH6G7PAJsnHyrFyW57UYZYY=
   attacker_same_level:
-    email: "attacker1@crapi.test"
-    password: "TestPassword123!"
+    email: attacker1@crapi.test
+    password: vault:v1:Ri4Z8GzLymb0Umo5jMA118UuepVCfOw8aOueU3C5OvJjdOE4yZZ1B3NmYEk=
   attacker_lower_level:
-    email: "attacker2@crapi.test"
-    password: "TestPassword123!"
+    email: attacker2@crapi.test
+    password: vault:v1:hqYGpjWd465LF4PUq8YEeN7M2tFUPHrjo6TT6HpzdBQBpe2ZLkXHYxB8uvI=
   mechanic_baseline:
-    email: "mechanic1@crapi.test"
-    password: "TestPassword123!"
+    email: mechanic1@crapi.test
+    password: vault:v1:kqZaijKpng_s5toRh8KcadVW2h442d4FuX0IlRJHESevRU77v_J70pY4sso=

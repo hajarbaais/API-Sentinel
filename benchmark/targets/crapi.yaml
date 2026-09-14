@@ -1,0 +1,52 @@
+# Cible de benchmark : OWASP crAPI (Completely Ridiculous API).
+#
+# Figee explicitement (ENF6 - reproductibilite scientifique) : les
+# resultats du benchmark ne sont comparables dans le temps que si la
+# version testee est connue et stable.
+
+name: "OWASP crAPI"
+repository: "https://github.com/OWASP/crAPI"
+pinned_release_tag: "v1.1.6"
+pinned_commit_develop: "b5fc307f3e5f875809b095b771108ef342a33724"
+pinned_commit_fetched_at: "2026-09-13"
+
+setup:
+  method: "docker-compose (voir le README du depot crAPI)"
+  base_url: "http://localhost:8888"
+  notes: >
+    crAPI expose plusieurs services derriere un reverse proxy sur le
+    port 8888 en local. La spec OpenAPI utilisee par API Sentinel
+    (tests/crapi-openapi-spec.json) a ete exportee manuellement depuis
+    la documentation officielle du projet - a re-exporter si la
+    version cible change.
+
+accounts_config: "config/accounts_crapi.yaml"
+roles_config: "config/roles_crapi.yaml"
+protected_endpoints_config: "config/protected_endpoints_crapi.yaml"
+
+ground_truth: "benchmark/ground_truth/crapi_known_vulns.json"
+
+# IMPORTANT : la CLI ecrit par defaut sur reports/rapport_securite.json,
+# un chemin partage par toutes les cibles. Un run contre une autre
+# cible (fake server, dogfooding GED...) ecrase silencieusement le
+# rapport crAPI si on ne surcharge pas ces deux options explicitement.
+# Toujours lancer le scan crAPI avec :
+#   api-sentinel --spec tests/crapi-openapi-spec.json \
+#     --accounts config/accounts_crapi.yaml --target-name "OWASP crAPI" \
+#     --report-json reports/crapi/rapport_securite.json \
+#     --report-html reports/crapi/rapport_securite.html \
+#     --evidence-path evidence/crapi_evidence.jsonl
+recommended_report_json: "reports/crapi/rapport_securite.json"
+recommended_report_html: "reports/crapi/rapport_securite.html"
+recommended_evidence_path: "evidence/crapi_evidence.jsonl"
+
+known_gaps_in_current_benchmark_setup:
+  - >
+    Aucun compte de test avec le role 'admin' n'est configure dans
+    accounts_crapi.yaml - le challenge BFLA #7 (suppression de video
+    en tant qu'admin) ne peut pas etre teste sans ce compte.
+  - >
+    protected_endpoints_crapi.yaml ne declare qu'un seul endpoint
+    protege (/workshop/api/management/users/all) - les autres
+    endpoints admin/mechanic de crAPI ne sont pas couverts par le
+    detecteur BFLA tant qu'ils n'y sont pas ajoutes manuellement.

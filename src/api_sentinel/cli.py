@@ -82,6 +82,17 @@ def build_parser() -> argparse.ArgumentParser:
     )
     parser.add_argument("--cloud-metadata-targets", default="config/cloud_metadata_targets.yaml")
     parser.add_argument("--ssrf-url-field-keywords", default="config/ssrf_url_field_keywords.yaml")
+    parser.add_argument(
+        "--ssrf-request-timeout",
+        type=int,
+        default=35,
+        help=(
+            "Timeout (s) par requete SSRF. Genereux par defaut : une cible qui "
+            "tente reellement d'atteindre 169.254.169.254 sans metadonnees "
+            "cloud reelles peut mettre plusieurs secondes a echouer proprement "
+            "cote serveur - un timeout trop court fait manquer la preuve."
+        ),
+    )
     parser.add_argument("--evidence-path", default="evidence/report_evidence.jsonl")
     parser.add_argument("--report-html", default="reports/rapport_securite.html")
     parser.add_argument("--report-json", default="reports/rapport_securite.json")
@@ -178,6 +189,7 @@ def run_scan(args: argparse.Namespace) -> ReportGenerator:
                 evidence_store=evidence_store,
                 url_field_discovery=url_field_discovery,
                 cloud_targets=cloud_targets,
+                request_timeout=args.ssrf_request_timeout,
             )
             ssrf_findings = ssrf_detector.run()
         except FileNotFoundError as exc:
