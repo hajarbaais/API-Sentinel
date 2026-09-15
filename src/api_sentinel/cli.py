@@ -14,6 +14,8 @@ from api_sentinel.detectors.bfla import BFLADetector
 from api_sentinel.detectors.bola import BOLADetector
 from api_sentinel.detectors.excessive_exposure import ExcessiveExposureDetector
 from api_sentinel.detectors.field_discovery import FieldDiscovery
+from api_sentinel.detectors.graphql_complexity import GraphQLComplexityDetector
+from api_sentinel.detectors.graphql_introspection import GraphQLIntrospectionDetector
 from api_sentinel.detectors.mass_assignment import MassAssignmentDetector
 from api_sentinel.detectors.rate_limiting import RateLimitingDetector
 from api_sentinel.detectors.ssrf_cloud import SSRFCloudDetector, URLFieldDiscovery, load_cloud_targets
@@ -83,6 +85,31 @@ def build_parser() -> argparse.ArgumentParser:
     parser.add_argument("--cloud-metadata-targets", default="config/cloud_metadata_targets.yaml")
     parser.add_argument("--ssrf-url-field-keywords", default="config/ssrf_url_field_keywords.yaml")
     parser.add_argument(
+        "--graphql-endpoint",
+        default="/graphql",
+        help="Chemin de l'endpoint GraphQL (utilise par les detecteurs introspection/complexite).",
+    )
+    parser.add_argument(
+        "--skip-graphql-introspection",
+        action="store_true",
+        help="Desactive le detecteur d'introspection GraphQL non authentifiee.",
+    )
+    parser.add_argument(
+        "--enable-graphql-complexity",
+        action="store_true",
+        help=(
+            "Active le detecteur de complexite GraphQL (desactive par defaut : "
+            "test actif nomme explicitement par EF8b aux cotes du SSRF et de la "
+            "charge, a n'activer que contre une cible explicitement autorisee)."
+        ),
+    )
+    parser.add_argument(
+        "--graphql-complexity-alias-count",
+        type=int,
+        default=500,
+        help="Nombre d'alias envoyes par la requete-sonde de complexite GraphQL (ENF2 : plafonne).",
+    )
+    parser.add_argument(
         "--ssrf-request-timeout",
         type=int,
         default=35,
@@ -96,6 +123,7 @@ def build_parser() -> argparse.ArgumentParser:
     parser.add_argument("--evidence-path", default="evidence/report_evidence.jsonl")
     parser.add_argument("--report-html", default="reports/rapport_securite.html")
     parser.add_argument("--report-json", default="reports/rapport_securite.json")
+    parser.add_argument("--report-sarif", default="reports/rapport_securite.sarif")
     parser.add_argument("-v", "--verbose", action="store_true")
     return parser
 
@@ -177,6 +205,25 @@ def run_scan(args: argparse.Namespace) -> ReportGenerator:
         )
         rate_limiting_findings = rate_limiting_detector.run(endpoints)
 
+    graphql_introspection_findings = []
+    if not args.skip_graphql_introspection:
+        introspection_detector = GraphQLIntrospectionDetector(
+            session_manager=session_manager,
+            evidence_store=evidence_store,
+            graphql_endpoint=args.graphql_endpoint,
+        )
+        graphql_introspection_findings = introspection_detector.run()
+
+    graphql_complexity_findings = []
+    if args.enable_graphql_complexity:
+        complexity_detector = GraphQLComplexityDetector(
+            session_manager=session_manager,
+            evidence_store=evidence_store,
+            graphql_endpoint=args.graphql_endpoint,
+            alias_count=args.graphql_complexity_alias_count,
+        )
+        graphql_complexity_findings = complexity_detector.run()
+
     ssrf_findings = []
     if args.enable_ssrf_cloud:
         try:
@@ -206,11 +253,14 @@ def run_scan(args: argparse.Namespace) -> ReportGenerator:
     report.add_findings(mass_assignment_findings)
     report.add_findings(excessive_exposure_findings)
     report.add_findings(rate_limiting_findings)
+    report.add_findings(graphql_introspection_findings)
+    report.add_findings(graphql_complexity_findings)
     report.add_findings(ssrf_findings)
     report.set_coverage_from_fixtures(fixtures, fixture_manager.failures)
 
     report.export_html(args.report_html)
     report.export_json(args.report_json)
+    report.export_sarif(args.report_sarif)
 
     return report
 
@@ -234,11 +284,14 @@ def main(argv: list[str] | None = None) -> int:
         f"{by_detector.get('mass_assignment', 0)} mass assignment, "
         f"{by_detector.get('excessive_exposure', 0)} exposition excessive, "
         f"{by_detector.get('rate_limiting', 0)} rate limiting, "
+        f"{by_detector.get('graphql_introspection', 0)} introspection GraphQL, "
+        f"{by_detector.get('graphql_complexity', 0)} complexite GraphQL, "
         f"{by_detector.get('ssrf_cloud', 0)} SSRF cloud), "
         f"couverture fixtures : {report.coverage.success_rate:.0%}"
     )
     print(f"  -> {args.report_html}")
     print(f"  -> {args.report_json}")
+    print(f"  -> {args.report_sarif}")
 
     return 0
 

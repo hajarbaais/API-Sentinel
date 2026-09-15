@@ -7,6 +7,7 @@ from pathlib import Path
 
 from api_sentinel.detectors.base_detector import Finding
 from api_sentinel.fixtures.fixture_manager import Fixture, FixtureCreationFailure
+from api_sentinel.reporting.sarif_export import export_sarif
 from api_sentinel.scoring.risk_scorer import RiskScorer
 
 logger = logging.getLogger(__name__)
@@ -137,6 +138,11 @@ class ReportGenerator:
         html = self._render_html()
         path.write_text(html, encoding="utf-8")
         logger.info("Rapport HTML exporte : %s", path)
+
+    def export_sarif(self, output_path: str) -> None:
+        """Exporte les findings au format SARIF 2.1.0 (EF5b)."""
+        export_sarif(self.findings, output_path)
+        logger.info("Rapport SARIF exporte : %s", output_path)
 
     def _render_html(self) -> str:
         summary = self._build_summary()

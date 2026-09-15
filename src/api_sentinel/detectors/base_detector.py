@@ -19,6 +19,7 @@ class OwaspCategory(str, Enum):
     RESOURCE_CONSUMPTION = "API4:2023 - Unrestricted Resource Consumption"
     BFLA = "API5:2023 - Broken Function Level Authorization"
     SSRF = "API7:2023 - Server Side Request Forgery"
+    SECURITY_MISCONFIGURATION = "API8:2023 - Security Misconfiguration"
 
 
 @dataclass
