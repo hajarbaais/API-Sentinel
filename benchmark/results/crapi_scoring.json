@@ -1,0 +1,140 @@
+{
+  "target": "OWASP crAPI",
+  "in_scope_vulnerability_count": 9,
+  "unmappable_in_scope_vulnerability_count": 0,
+  "true_positives": 1,
+  "false_negatives": 8,
+  "recall": 0.1111111111111111,
+  "total_findings_in_report": 7,
+  "findings_matched_to_ground_truth": 1,
+  "findings_requiring_manual_triage": 6,
+  "per_vulnerability_results": [
+    {
+      "id": "crapi-1",
+      "challenge_name": "Access details of another user's vehicle",
+      "endpoint": "GET /identity/api/v2/vehicle/{vehicleId}/location",
+      "predicted_outcome": "fn",
+      "actual_outcome": "fn",
+      "prediction_confirmed": true,
+      "matched_finding_title": null
+    },
+    {
+      "id": "crapi-2",
+      "challenge_name": "Access mechanic reports of other users",
+      "endpoint": "GET /workshop/api/mechanic/mechanic_report",
+      "predicted_outcome": "fn",
+      "actual_outcome": "fn",
+      "prediction_confirmed": true,
+      "matched_finding_title": null
+    },
+    {
+      "id": "crapi-5",
+      "challenge_name": "Find an API endpoint that leaks an internal property of a video",
+      "endpoint": "GET /identity/api/v2/user/videos/{video_id}",
+      "predicted_outcome": "fn",
+      "actual_outcome": "fn",
+      "prediction_confirmed": true,
+      "matched_finding_title": null
+    },
+    {
+      "id": "crapi-6",
+      "challenge_name": "Perform a layer 7 DoS using 'contact mechanic' feature",
+      "endpoint": "POST /workshop/api/merchant/contact_mechanic",
+      "predicted_outcome": "fn",
+      "actual_outcome": "fn",
+      "prediction_confirmed": true,
+      "matched_finding_title": null
+    },
+    {
+      "id": "crapi-7",
+      "challenge_name": "Delete a video of another user",
+      "endpoint": "DELETE /identity/api/v2/admin/videos/{video_id}",
+      "predicted_outcome": "fn",
+      "actual_outcome": "fn",
+      "prediction_confirmed": true,
+      "matched_finding_title": null
+    },
+    {
+      "id": "crapi-8",
+      "challenge_name": "Get an item for free (return order abuse)",
+      "endpoint": "POST /workshop/api/shop/orders/return_order",
+      "predicted_outcome": "fn",
+      "actual_outcome": "fn",
+      "prediction_confirmed": true,
+      "matched_finding_title": null
+    },
+    {
+      "id": "crapi-9",
+      "challenge_name": "Increase your balance by $1,000 or more",
+      "endpoint": "POST /workshop/api/shop/orders/return_order",
+      "predicted_outcome": "fn",
+      "actual_outcome": "fn",
+      "prediction_confirmed": true,
+      "matched_finding_title": null
+    },
+    {
+      "id": "crapi-10",
+      "challenge_name": "Update internal video properties",
+      "endpoint": "PUT /identity/api/v2/user/videos/{video_id}",
+      "predicted_outcome": "fn",
+      "actual_outcome": "fn",
+      "prediction_confirmed": true,
+      "matched_finding_title": null
+    },
+    {
+      "id": "crapi-11",
+      "challenge_name": "Make crAPI send an HTTP call to an arbitrary URL",
+      "endpoint": "POST /workshop/api/merchant/contact_mechanic",
+      "predicted_outcome": "tp",
+      "actual_outcome": "tp",
+      "prediction_confirmed": true,
+      "matched_finding_title": "SSRF probable (NON confirme par contenu) sur POST /workshop/api/merchant/contact_mechanic : le champ 'body:mechanic_api' a provoque un depassement de delai (35s) en pointant vers http://169.254.169.254/latest/meta-data/ (AWS)."
+    }
+  ],
+  "regressions_vs_prediction": [],
+  "other_surprises_vs_prediction": [],
+  "findings_beyond_ground_truth_detail": [
+    {
+      "title": "BOLA confirme sur /community/api/v2/community/posts : le role 'attacker_same_level' accede aux donnees du role 'victim'",
+      "detector": "bola",
+      "affected_endpoint": "/community/api/v2/community/posts/ZwGuevQAhskYbTaFEWTaXJ",
+      "confidence": 0.9,
+      "note": "Ne correspond a aucune entree du ground truth - peut etre une vraie faille non documentee officiellement, ou un faux positif : verification manuelle requise avant de la compter dans une metrique de precision."
+    },
+    {
+      "title": "BOLA confirme sur /community/api/v2/community/posts : le role 'attacker_lower_level' accede aux donnees du role 'victim'",
+      "detector": "bola",
+      "affected_endpoint": "/community/api/v2/community/posts/ZwGuevQAhskYbTaFEWTaXJ",
+      "confidence": 0.9,
+      "note": "Ne correspond a aucune entree du ground truth - peut etre une vraie faille non documentee officiellement, ou un faux positif : verification manuelle requise avant de la compter dans une metrique de precision."
+    },
+    {
+      "title": "Absence de rate limiting detectee sur GET /identity/api/v2/user/dashboard : 20 requetes consecutives acceptees sans throttling.",
+      "detector": "rate_limiting",
+      "affected_endpoint": "GET /identity/api/v2/user/dashboard",
+      "confidence": 0.55,
+      "note": "Ne correspond a aucune entree du ground truth - peut etre une vraie faille non documentee officiellement, ou un faux positif : verification manuelle requise avant de la compter dans une metrique de precision."
+    },
+    {
+      "title": "Absence de rate limiting detectee sur POST /identity/api/v2/user/pictures : 20 requetes consecutives acceptees sans throttling.",
+      "detector": "rate_limiting",
+      "affected_endpoint": "POST /identity/api/v2/user/pictures",
+      "confidence": 0.55,
+      "note": "Ne correspond a aucune entree du ground truth - peut etre une vraie faille non documentee officiellement, ou un faux positif : verification manuelle requise avant de la compter dans une metrique de precision."
+    },
+    {
+      "title": "SSRF probable (NON confirme par contenu) sur POST /workshop/api/merchant/contact_mechanic : le champ 'body:mechanic_api' a provoque un depassement de delai (35s) en pointant vers http://169.254.169.254/computeMetadata/v1/ (GCP).",
+      "detector": "ssrf_cloud",
+      "affected_endpoint": "POST /workshop/api/merchant/contact_mechanic",
+      "confidence": 0.4,
+      "note": "Ne correspond a aucune entree du ground truth - peut etre une vraie faille non documentee officiellement, ou un faux positif : verification manuelle requise avant de la compter dans une metrique de precision."
+    },
+    {
+      "title": "SSRF probable (NON confirme par contenu) sur POST /workshop/api/merchant/contact_mechanic : le champ 'body:mechanic_api' a provoque un depassement de delai (35s) en pointant vers http://169.254.169.254/metadata/instance?api-version=2021-02-01 (AZURE).",
+      "detector": "ssrf_cloud",
+      "affected_endpoint": "POST /workshop/api/merchant/contact_mechanic",
+      "confidence": 0.4,
+      "note": "Ne correspond a aucune entree du ground truth - peut etre une vraie faille non documentee officiellement, ou un faux positif : verification manuelle requise avant de la compter dans une metrique de precision."
+    }
+  ]
+}

@@ -178,29 +178,40 @@ class FixtureManager:
         return any(keyword in normalized_path for keyword in self._excluded_keywords)
 
     def _create_fixture_for(self, endpoint: Endpoint, account: Account) -> None:
-       
+
         operation = self._get_operation_definition(endpoint)
         payload = self.payload_generator.generate_for_request_body(operation)
-
-        if payload is None:
-            self._record_failure(
-                endpoint, account,
-                "Payload non generable (pas de schema JSON exploitable)."
-            )
-            return
-
         url = f"{account.base_url}{endpoint.path}"
 
-        try:
-            response = requests.post(
-                url,
-                json=payload,
-                headers=account.auth_headers(),
-                timeout=self.request_timeout,
-            )
-        except requests.RequestException as exc:
-            self._record_failure(endpoint, account, f"Erreur reseau : {exc}")
-            return
+        if payload is not None:
+            try:
+                response = requests.post(
+                    url, json=payload, headers=account.auth_headers(),
+                    timeout=self.request_timeout,
+                )
+            except requests.RequestException as exc:
+                self._record_failure(endpoint, account, f"Erreur reseau : {exc}")
+                return
+        else:
+            # Pas de schema JSON exploitable : repli sur multipart/form-data
+            # (endpoints d'upload de fichier, ex. crAPI /user/pictures,
+            # /user/videos - benchmark crapi-5) avant d'abandonner.
+            multipart_files = self.payload_generator.generate_multipart_for_request_body(operation)
+            if multipart_files is None:
+                self._record_failure(
+                    endpoint, account,
+                    "Payload non generable (pas de schema JSON ni multipart exploitable)."
+                )
+                return
+            payload = {"__multipart_fields__": list(multipart_files.keys())}
+            try:
+                response = requests.post(
+                    url, files=multipart_files, headers=account.auth_headers(),
+                    timeout=self.request_timeout,
+                )
+            except requests.RequestException as exc:
+                self._record_failure(endpoint, account, f"Erreur reseau : {exc}")
+                return
 
         if response.status_code not in (200, 201):
             self._record_failure(
@@ -300,14 +311,54 @@ class FixtureManager:
         return None
 
     def _match_detail_endpoint(self, creation_endpoint: Endpoint) -> Optional[Endpoint]:
-        
-        candidates = [
-            ep for ep in self.endpoints
-            if ep.method == "GET"
-            and ep.has_path_param
-            and ep.path.startswith(creation_endpoint.path.rstrip("/") + "/")
+        """
+        Associe un endpoint de creation a son endpoint de detail (GET
+        avec parametre de chemin) le plus probable, pour permettre a
+        BOLA et aux autres detecteurs de relire l'objet cree.
+
+        Deux heuristiques, dans l'ordre :
+          1. Prefixe strict (API RESTful standard :
+             POST /items -> GET /items/{id}).
+          2. A defaut, le segment STATIQUE precedant immediatement le
+             parametre de chemin du endpoint de detail (le nom de la
+             collection/ressource, ex. "vehicle" dans
+             /vehicle/{vehicleId}/location) doit apparaitre quelque
+             part dans le chemin de creation. Necessaire pour les API
+             non strictement RESTful ou l'endpoint de creation a un
+             nom d'action distinct de son chemin de detail (ex. crAPI :
+             POST /vehicle/add_vehicle vs
+             GET /vehicle/{vehicleId}/location - benchmark crapi-1).
+             Se limiter au segment le plus proche du parametre (et non
+             tout segment du chemin) evite les faux matches sur des
+             prefixes generiques d'API partages par des ressources
+             sans rapport (ex. "/api/v2/...").
+        """
+        detail_candidates = [
+            ep for ep in self.endpoints if ep.method == "GET" and ep.has_path_param
         ]
-        return candidates[0] if candidates else None
+
+        prefix_matches = [
+            ep for ep in detail_candidates
+            if ep.path.startswith(creation_endpoint.path.rstrip("/") + "/")
+        ]
+        if prefix_matches:
+            return prefix_matches[0]
+
+        creation_segments = set(creation_endpoint.path.strip("/").split("/"))
+        for ep in detail_candidates:
+            anchor = self._segment_before_first_path_param(ep.path)
+            if anchor and anchor in creation_segments:
+                return ep
+
+        return None
+
+    @staticmethod
+    def _segment_before_first_path_param(path: str) -> Optional[str]:
+        segments = path.strip("/").split("/")
+        for i, segment in enumerate(segments):
+            if segment.startswith("{") and segment.endswith("}"):
+                return segments[i - 1] if i > 0 else None
+        return None
 
     def _record_failure(self, endpoint: Endpoint, account: Account, reason: str) -> None:
        

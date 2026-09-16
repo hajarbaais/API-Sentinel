@@ -75,6 +75,16 @@ def build_parser() -> argparse.ArgumentParser:
         help="Nombre de requetes consecutives envoyees pour le test de rate limiting (ENF2 : plafonne).",
     )
     parser.add_argument(
+        "--enable-rate-limiting-post-actions",
+        action="store_true",
+        help=(
+            "Etend le test de rate limiting a UN endpoint POST-action "
+            "(hors exclusions), en plus du GET habituel (desactive par "
+            "defaut : une rafale de POST peut avoir un effet de bord reel, "
+            "contrairement a une lecture - ENF2)."
+        ),
+    )
+    parser.add_argument(
         "--enable-ssrf-cloud",
         action="store_true",
         help=(
@@ -215,8 +225,12 @@ def run_scan(args: argparse.Namespace) -> ReportGenerator:
             session_manager=session_manager,
             evidence_store=evidence_store,
             request_count=args.rate_limiting_request_count,
+            raw_openapi_spec=openapi_parser.raw_spec,
+            excluded_actions_config=args.excluded_actions,
         )
-        rate_limiting_findings = rate_limiting_detector.run(endpoints)
+        rate_limiting_findings = rate_limiting_detector.run(
+            endpoints, include_post_actions=args.enable_rate_limiting_post_actions
+        )
 
     graphql_introspection_findings = []
     if not args.skip_graphql_introspection:

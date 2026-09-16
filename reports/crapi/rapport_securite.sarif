@@ -1,0 +1,306 @@
+{
+  "$schema": "https://raw.githubusercontent.com/oasis-tcs/sarif-spec/master/Schemata/sarif-schema-2.1.0.json",
+  "version": "2.1.0",
+  "runs": [
+    {
+      "tool": {
+        "driver": {
+          "name": "API Sentinel",
+          "informationUri": "https://github.com/api-sentinel/api-sentinel",
+          "version": "0.1.0",
+          "rules": [
+            {
+              "id": "bola",
+              "name": "bola",
+              "shortDescription": {
+                "text": "API1:2023 - Broken Object Level Authorization"
+              },
+              "fullDescription": {
+                "text": "API1:2023 - Broken Object Level Authorization"
+              },
+              "helpUri": "https://github.com/api-sentinel/api-sentinel",
+              "defaultConfiguration": {
+                "level": "error"
+              },
+              "properties": {
+                "tags": [
+                  "security",
+                  "api-security",
+                  "bola"
+                ]
+              }
+            },
+            {
+              "id": "rate_limiting",
+              "name": "rate_limiting",
+              "shortDescription": {
+                "text": "API4:2023 - Unrestricted Resource Consumption"
+              },
+              "fullDescription": {
+                "text": "API4:2023 - Unrestricted Resource Consumption"
+              },
+              "helpUri": "https://github.com/api-sentinel/api-sentinel",
+              "defaultConfiguration": {
+                "level": "warning"
+              },
+              "properties": {
+                "tags": [
+                  "security",
+                  "api-security",
+                  "resource_consumption"
+                ]
+              }
+            },
+            {
+              "id": "ssrf_cloud",
+              "name": "ssrf_cloud",
+              "shortDescription": {
+                "text": "API7:2023 - Server Side Request Forgery"
+              },
+              "fullDescription": {
+                "text": "API7:2023 - Server Side Request Forgery"
+              },
+              "helpUri": "https://github.com/api-sentinel/api-sentinel",
+              "defaultConfiguration": {
+                "level": "warning"
+              },
+              "properties": {
+                "tags": [
+                  "security",
+                  "api-security",
+                  "ssrf"
+                ]
+              }
+            }
+          ]
+        }
+      },
+      "results": [
+        {
+          "ruleId": "bola",
+          "ruleIndex": 0,
+          "level": "error",
+          "message": {
+            "text": "2 champ(s) sensible(s) appartenant a la victime ont ete retrouves, avec la meme valeur, dans la reponse obtenue par l'attaquant : nickname, email."
+          },
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": "api-endpoints//community/api/v2/community/posts/ZwGuevQAhskYbTaFEWTaXJ/unknown"
+                }
+              },
+              "logicalLocations": [
+                {
+                  "fullyQualifiedName": "/community/api/v2/community/posts/ZwGuevQAhskYbTaFEWTaXJ",
+                  "kind": "resource"
+                }
+              ]
+            }
+          ],
+          "properties": {
+            "security-severity": "9.5",
+            "confidence": 0.9,
+            "owasp_category": "API1:2023 - Broken Object Level Authorization",
+            "victim_role": "victim",
+            "attacker_role": "attacker_same_level",
+            "evidence_test_id": "bola-00005",
+            "detected_at": "2026-09-16T12:31:57.638554+00:00"
+          }
+        },
+        {
+          "ruleId": "bola",
+          "ruleIndex": 0,
+          "level": "error",
+          "message": {
+            "text": "2 champ(s) sensible(s) appartenant a la victime ont ete retrouves, avec la meme valeur, dans la reponse obtenue par l'attaquant : nickname, email."
+          },
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": "api-endpoints//community/api/v2/community/posts/ZwGuevQAhskYbTaFEWTaXJ/unknown"
+                }
+              },
+              "logicalLocations": [
+                {
+                  "fullyQualifiedName": "/community/api/v2/community/posts/ZwGuevQAhskYbTaFEWTaXJ",
+                  "kind": "resource"
+                }
+              ]
+            }
+          ],
+          "properties": {
+            "security-severity": "9.5",
+            "confidence": 0.9,
+            "owasp_category": "API1:2023 - Broken Object Level Authorization",
+            "victim_role": "victim",
+            "attacker_role": "attacker_lower_level",
+            "evidence_test_id": "bola-00006",
+            "detected_at": "2026-09-16T12:31:59.705173+00:00"
+          }
+        },
+        {
+          "ruleId": "rate_limiting",
+          "ruleIndex": 1,
+          "level": "warning",
+          "message": {
+            "text": "20 requetes ont ete envoyees en succession rapide sans qu'aucune ne recoive de code 429 (Too Many Requests). Codes recus : [200]. Cela ne prouve pas une absence totale de limitation (un seuil plus eleve ou une fenetre glissante differente pourrait exister au-dela de cet echantillon volontairement borne), mais suggere qu'aucune protection n'est active a cette echelle - confiance plafonnee en consequence."
+          },
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": "api-endpoints/GET/identity/api/v2/user/dashboard"
+                }
+              },
+              "logicalLocations": [
+                {
+                  "fullyQualifiedName": "GET /identity/api/v2/user/dashboard",
+                  "kind": "resource"
+                }
+              ]
+            }
+          ],
+          "properties": {
+            "security-severity": "5.0",
+            "confidence": 0.55,
+            "owasp_category": "API4:2023 - Unrestricted Resource Consumption",
+            "victim_role": "N/A",
+            "attacker_role": "attacker_same_level",
+            "evidence_test_id": "rate_limiting-00026",
+            "detected_at": "2026-09-16T12:36:44.193367+00:00"
+          }
+        },
+        {
+          "ruleId": "rate_limiting",
+          "ruleIndex": 1,
+          "level": "warning",
+          "message": {
+            "text": "20 requetes ont ete envoyees en succession rapide sans qu'aucune ne recoive de code 429 (Too Many Requests). Codes recus : [500]. Cela ne prouve pas une absence totale de limitation (un seuil plus eleve ou une fenetre glissante differente pourrait exister au-dela de cet echantillon volontairement borne), mais suggere qu'aucune protection n'est active a cette echelle - confiance plafonnee en consequence. Un endpoint POST repete a cette echelle peut, contrairement a une simple lecture, avoir un impact reel (notifications, emails, calcul serveur) - risque de deni de service applicatif (layer 7)."
+          },
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": "api-endpoints/POST/identity/api/v2/user/pictures"
+                }
+              },
+              "logicalLocations": [
+                {
+                  "fullyQualifiedName": "POST /identity/api/v2/user/pictures",
+                  "kind": "resource"
+                }
+              ]
+            }
+          ],
+          "properties": {
+            "security-severity": "5.0",
+            "confidence": 0.55,
+            "owasp_category": "API4:2023 - Unrestricted Resource Consumption",
+            "victim_role": "N/A",
+            "attacker_role": "attacker_same_level",
+            "evidence_test_id": "rate_limiting-00027",
+            "detected_at": "2026-09-16T12:37:25.853948+00:00"
+          }
+        },
+        {
+          "ruleId": "ssrf_cloud",
+          "ruleIndex": 2,
+          "level": "warning",
+          "message": {
+            "text": "Aucune reponse recue apres 35s alors que les autres requetes a cette cible repondent normalement en quelques centaines de millisecondes. Un champ qui se contente d'un echo ou d'une validation locale ne peut pas provoquer un tel delai - ce comportement suggere fortement une tentative de connexion sortante reelle vers l'URL injectee, meme si son contenu (donc la preuve forte de metadonnees exposees) n'a pas pu etre recupere dans le delai imparti. A verifier manuellement (augmenter encore le timeout, ou capturer le trafic sortant du serveur) avant de considerer ce finding comme une preuve definitive."
+          },
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": "api-endpoints/POST/workshop/api/merchant/contact_mechanic"
+                }
+              },
+              "logicalLocations": [
+                {
+                  "fullyQualifiedName": "POST /workshop/api/merchant/contact_mechanic",
+                  "kind": "resource"
+                }
+              ]
+            }
+          ],
+          "properties": {
+            "security-severity": "5.0",
+            "confidence": 0.4,
+            "owasp_category": "API7:2023 - Server Side Request Forgery",
+            "victim_role": "N/A",
+            "attacker_role": "attacker_same_level",
+            "evidence_test_id": "ssrf_cloud-00032",
+            "detected_at": "2026-09-16T12:38:11.781434+00:00"
+          }
+        },
+        {
+          "ruleId": "ssrf_cloud",
+          "ruleIndex": 2,
+          "level": "warning",
+          "message": {
+            "text": "Aucune reponse recue apres 35s alors que les autres requetes a cette cible repondent normalement en quelques centaines de millisecondes. Un champ qui se contente d'un echo ou d'une validation locale ne peut pas provoquer un tel delai - ce comportement suggere fortement une tentative de connexion sortante reelle vers l'URL injectee, meme si son contenu (donc la preuve forte de metadonnees exposees) n'a pas pu etre recupere dans le delai imparti. A verifier manuellement (augmenter encore le timeout, ou capturer le trafic sortant du serveur) avant de considerer ce finding comme une preuve definitive."
+          },
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": "api-endpoints/POST/workshop/api/merchant/contact_mechanic"
+                }
+              },
+              "logicalLocations": [
+                {
+                  "fullyQualifiedName": "POST /workshop/api/merchant/contact_mechanic",
+                  "kind": "resource"
+                }
+              ]
+            }
+          ],
+          "properties": {
+            "security-severity": "5.0",
+            "confidence": 0.4,
+            "owasp_category": "API7:2023 - Server Side Request Forgery",
+            "victim_role": "N/A",
+            "attacker_role": "attacker_same_level",
+            "evidence_test_id": "ssrf_cloud-00033",
+            "detected_at": "2026-09-16T12:38:48.814801+00:00"
+          }
+        },
+        {
+          "ruleId": "ssrf_cloud",
+          "ruleIndex": 2,
+          "level": "warning",
+          "message": {
+            "text": "Aucune reponse recue apres 35s alors que les autres requetes a cette cible repondent normalement en quelques centaines de millisecondes. Un champ qui se contente d'un echo ou d'une validation locale ne peut pas provoquer un tel delai - ce comportement suggere fortement une tentative de connexion sortante reelle vers l'URL injectee, meme si son contenu (donc la preuve forte de metadonnees exposees) n'a pas pu etre recupere dans le delai imparti. A verifier manuellement (augmenter encore le timeout, ou capturer le trafic sortant du serveur) avant de considerer ce finding comme une preuve definitive."
+          },
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": "api-endpoints/POST/workshop/api/merchant/contact_mechanic"
+                }
+              },
+              "logicalLocations": [
+                {
+                  "fullyQualifiedName": "POST /workshop/api/merchant/contact_mechanic",
+                  "kind": "resource"
+                }
+              ]
+            }
+          ],
+          "properties": {
+            "security-severity": "5.0",
+            "confidence": 0.4,
+            "owasp_category": "API7:2023 - Server Side Request Forgery",
+            "victim_role": "N/A",
+            "attacker_role": "attacker_same_level",
+            "evidence_test_id": "ssrf_cloud-00034",
+            "detected_at": "2026-09-16T12:39:25.877442+00:00"
+          }
+        }
+      ]
+    }
+  ]
+}

@@ -2,13 +2,22 @@
 import logging
 import uuid
 from datetime import datetime, timezone
-from typing import Any
+from typing import Any, Optional
 
 logger = logging.getLogger(__name__)
 
+# GIF 1x1 transparent minimal mais VALIDE (magic bytes GIF89a corrects) -
+# pour satisfaire une eventuelle validation basique de type MIME cote
+# serveur sur un endpoint d'upload d'image/video, sans avoir a generer
+# un vrai fichier multimedia.
+PLACEHOLDER_BINARY_FILE = (
+    b"GIF89a\x01\x00\x01\x00\x80\x00\x00\x00\x00\x00\xff\xff\xff!\xf9\x04"
+    b"\x01\x00\x00\x00\x00,\x00\x00\x00\x00\x01\x00\x01\x00\x00\x02\x02D\x01\x00;"
+)
+
 
 class SchemaResolutionError(Exception):
-   
+
     pass
 
 
@@ -44,6 +53,63 @@ class PayloadGenerator:
         except SchemaResolutionError as exc:
             logger.warning("Echec de generation de payload : %s", exc)
             return None
+
+    def generate_multipart_for_request_body(self, operation: dict) -> Optional[dict]:
+        """
+        Genere les champs d'un formulaire `multipart/form-data` (upload
+        de fichier), au format attendu par `requests` pour son parametre
+        `files=` - pas `json=`. Complementaire de
+        `generate_for_request_body` (qui ne gere que
+        `application/json` et retourne None sur ce type de contenu) :
+        les deux methodes restent separees pour ne rien changer au
+        contrat des appelants existants qui n'ont besoin que du JSON.
+
+        Un champ `format: binary` recoit un petit fichier image PLACEHOLDER
+        valide (cf. PLACEHOLDER_BINARY_FILE) plutot que des octets
+        arbitraires, pour maximiser les chances de passer une validation
+        basique de type MIME cote serveur (upload de photo/video).
+        """
+        request_body = operation.get("requestBody")
+        if not request_body:
+            return None
+
+        multipart_content = request_body.get("content", {}).get("multipart/form-data")
+        if not multipart_content:
+            return None
+
+        schema = multipart_content.get("schema")
+        if not schema:
+            return None
+
+        if "$ref" in schema:
+            try:
+                schema = self._resolve_ref(schema["$ref"])
+            except SchemaResolutionError as exc:
+                logger.warning("Echec de generation de payload multipart : %s", exc)
+                return None
+
+        properties = schema.get("properties", {})
+        files: dict[str, Any] = {}
+
+        for field_name, field_schema in properties.items():
+            if field_schema.get("format") == "binary":
+                files[field_name] = (
+                    "sentinel-test.gif", PLACEHOLDER_BINARY_FILE, "image/gif",
+                )
+                continue
+            try:
+                value = self._generate_value(field_schema, depth=0)
+            except SchemaResolutionError:
+                logger.debug(
+                    "Champ multipart '%s' ignore (generation impossible).",
+                    field_name,
+                )
+                continue
+            # Un champ texte multipart doit etre une chaine - `requests`
+            # n'accepte pas un int/bool/dict tel quel dans `files=`.
+            files[field_name] = (None, str(value))
+
+        return files or None
 
     def _resolve_ref(self, ref: str) -> dict:
         

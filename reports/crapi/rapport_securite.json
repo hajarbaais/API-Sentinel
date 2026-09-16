@@ -1,43 +1,86 @@
 {
   "target_name": "OWASP crAPI",
   "target_base_url": "http://localhost:8888",
-  "generated_at": "2026-09-13T19:07:01.409420+00:00",
+  "generated_at": "2026-09-16T12:39:25.880233+00:00",
   "summary": {
-    "total_findings": 8,
+    "total_findings": 7,
     "findings_by_severity": {
       "critical": 2,
-      "high": 2,
-      "medium": 4
+      "medium": 5
     },
     "findings_by_detector": {
       "bola": 2,
-      "bfla": 2,
-      "rate_limiting": 1,
+      "rate_limiting": 2,
       "ssrf_cloud": 3
     },
     "findings_by_owasp_category": {
       "API1:2023 - Broken Object Level Authorization": 2,
-      "API5:2023 - Broken Function Level Authorization": 2,
-      "API4:2023 - Unrestricted Resource Consumption": 1,
+      "API4:2023 - Unrestricted Resource Consumption": 2,
       "API7:2023 - Server Side Request Forgery": 3
     }
   },
+  "risk_score": {
+    "overall_score": 99.4,
+    "overall_risk_level": "critical",
+    "by_category": [
+      {
+        "category": "API1:2023 - Broken Object Level Authorization",
+        "score": 97.9,
+        "risk_level": "critical",
+        "finding_count": 2
+      },
+      {
+        "category": "API7:2023 - Server Side Request Forgery",
+        "score": 48.8,
+        "risk_level": "medium",
+        "finding_count": 3
+      },
+      {
+        "category": "API4:2023 - Unrestricted Resource Consumption",
+        "score": 47.4,
+        "risk_level": "medium",
+        "finding_count": 2
+      }
+    ],
+    "findings_requiring_manual_review": [
+      {
+        "detector": "rate_limiting",
+        "title": "Absence de rate limiting detectee sur GET /identity/api/v2/user/dashboard : 20 requetes consecutives acceptees sans throttling.",
+        "confidence": 0.55,
+        "evidence_test_id": "rate_limiting-00026"
+      },
+      {
+        "detector": "rate_limiting",
+        "title": "Absence de rate limiting detectee sur POST /identity/api/v2/user/pictures : 20 requetes consecutives acceptees sans throttling.",
+        "confidence": 0.55,
+        "evidence_test_id": "rate_limiting-00027"
+      },
+      {
+        "detector": "ssrf_cloud",
+        "title": "SSRF probable (NON confirme par contenu) sur POST /workshop/api/merchant/contact_mechanic : le champ 'body:mechanic_api' a provoque un depassement de delai (35s) en pointant vers http://169.254.169.254/latest/meta-data/ (AWS).",
+        "confidence": 0.4,
+        "evidence_test_id": "ssrf_cloud-00032"
+      },
+      {
+        "detector": "ssrf_cloud",
+        "title": "SSRF probable (NON confirme par contenu) sur POST /workshop/api/merchant/contact_mechanic : le champ 'body:mechanic_api' a provoque un depassement de delai (35s) en pointant vers http://169.254.169.254/computeMetadata/v1/ (GCP).",
+        "confidence": 0.4,
+        "evidence_test_id": "ssrf_cloud-00033"
+      },
+      {
+        "detector": "ssrf_cloud",
+        "title": "SSRF probable (NON confirme par contenu) sur POST /workshop/api/merchant/contact_mechanic : le champ 'body:mechanic_api' a provoque un depassement de delai (35s) en pointant vers http://169.254.169.254/metadata/instance?api-version=2021-02-01 (AZURE).",
+        "confidence": 0.4,
+        "evidence_test_id": "ssrf_cloud-00034"
+      }
+    ]
+  },
   "coverage": {
     "total_creation_endpoints_attempted": 36,
-    "fixtures_created_successfully": 6,
-    "creation_failures": 30,
+    "fixtures_created_successfully": 12,
+    "creation_failures": 24,
     "failure_reasons": [
       {
-        "endpoint": "/identity/api/v2/user/pictures",
-        "role": "victim",
-        "reason": "Payload non generable (pas de schema JSON exploitable)."
-      },
-      {
-        "endpoint": "/identity/api/v2/user/videos",
-        "role": "victim",
-        "reason": "Payload non generable (pas de schema JSON exploitable)."
-      },
-      {
         "endpoint": "/identity/api/v2/vehicle/add_vehicle",
         "role": "victim",
         "reason": "Code HTTP inattendu : 403 (corps de reponse : {\"message\":\"Sorry, This Vehicle is already added.\",\"status\":403})"
@@ -45,7 +88,7 @@
       {
         "endpoint": "/identity/api/v2/vehicle/resend_email",
         "role": "victim",
-        "reason": "Payload non generable (pas de schema JSON exploitable)."
+        "reason": "Payload non generable (pas de schema JSON ni multipart exploitable)."
       },
       {
         "endpoint": "/community/api/v2/coupon/new-coupon",
@@ -65,7 +108,7 @@
       {
         "endpoint": "/workshop/api/shop/orders/return_order",
         "role": "victim",
-        "reason": "Payload non generable (pas de schema JSON exploitable)."
+        "reason": "Payload non generable (pas de schema JSON ni multipart exploitable)."
       },
       {
         "endpoint": "/workshop/api/shop/apply_coupon",
@@ -75,17 +118,7 @@
       {
         "endpoint": "/workshop/api/merchant/contact_mechanic",
         "role": "victim",
-        "reason": "Code HTTP inattendu : 400 (corps de reponse : {\"message\":\"Invalid URL 'sentinel-test-6b519a2a': No scheme supplied. Perhaps you meant https://sentinel-test-6b519a2a?\"})"
-      },
-      {
-        "endpoint": "/identity/api/v2/user/pictures",
-        "role": "attacker_same_level",
-        "reason": "Payload non generable (pas de schema JSON exploitable)."
-      },
-      {
-        "endpoint": "/identity/api/v2/user/videos",
-        "role": "attacker_same_level",
-        "reason": "Payload non generable (pas de schema JSON exploitable)."
+        "reason": "Code HTTP inattendu : 400 (corps de reponse : {\"message\":\"Invalid URL 'sentinel-test-613ec5b8': No scheme supplied. Perhaps you meant https://sentinel-test-613ec5b8?\"})"
       },
       {
         "endpoint": "/identity/api/v2/vehicle/add_vehicle",
@@ -95,7 +128,7 @@
       {
         "endpoint": "/identity/api/v2/vehicle/resend_email",
         "role": "attacker_same_level",
-        "reason": "Payload non generable (pas de schema JSON exploitable)."
+        "reason": "Payload non generable (pas de schema JSON ni multipart exploitable)."
       },
       {
         "endpoint": "/community/api/v2/coupon/new-coupon",
@@ -115,7 +148,7 @@
       {
         "endpoint": "/workshop/api/shop/orders/return_order",
         "role": "attacker_same_level",
-        "reason": "Payload non generable (pas de schema JSON exploitable)."
+        "reason": "Payload non generable (pas de schema JSON ni multipart exploitable)."
       },
       {
         "endpoint": "/workshop/api/shop/apply_coupon",
@@ -125,17 +158,7 @@
       {
         "endpoint": "/workshop/api/merchant/contact_mechanic",
         "role": "attacker_same_level",
-        "reason": "Code HTTP inattendu : 400 (corps de reponse : {\"message\":\"Invalid URL 'sentinel-test-65719f55': No scheme supplied. Perhaps you meant https://sentinel-test-65719f55?\"})"
-      },
-      {
-        "endpoint": "/identity/api/v2/user/pictures",
-        "role": "attacker_lower_level",
-        "reason": "Payload non generable (pas de schema JSON exploitable)."
-      },
-      {
-        "endpoint": "/identity/api/v2/user/videos",
-        "role": "attacker_lower_level",
-        "reason": "Payload non generable (pas de schema JSON exploitable)."
+        "reason": "Code HTTP inattendu : 400 (corps de reponse : {\"message\":\"Invalid URL 'sentinel-test-e78ba1e2': No scheme supplied. Perhaps you meant https://sentinel-test-e78ba1e2?\"})"
       },
       {
         "endpoint": "/identity/api/v2/vehicle/add_vehicle",
@@ -145,7 +168,7 @@
       {
         "endpoint": "/identity/api/v2/vehicle/resend_email",
         "role": "attacker_lower_level",
-        "reason": "Payload non generable (pas de schema JSON exploitable)."
+        "reason": "Payload non generable (pas de schema JSON ni multipart exploitable)."
       },
       {
         "endpoint": "/community/api/v2/coupon/new-coupon",
@@ -165,7 +188,7 @@
       {
         "endpoint": "/workshop/api/shop/orders/return_order",
         "role": "attacker_lower_level",
-        "reason": "Payload non generable (pas de schema JSON exploitable)."
+        "reason": "Payload non generable (pas de schema JSON ni multipart exploitable)."
       },
       {
         "endpoint": "/workshop/api/shop/apply_coupon",
@@ -175,7 +198,7 @@
       {
         "endpoint": "/workshop/api/merchant/contact_mechanic",
         "role": "attacker_lower_level",
-        "reason": "Code HTTP inattendu : 400 (corps de reponse : {\"message\":\"Invalid URL 'sentinel-test-6f8151df': No scheme supplied. Perhaps you meant https://sentinel-test-6f8151df?\"})"
+        "reason": "Code HTTP inattendu : 400 (corps de reponse : {\"message\":\"Invalid URL 'sentinel-test-d0a911ed': No scheme supplied. Perhaps you meant https://sentinel-test-d0a911ed?\"})"
       }
     ]
   },
@@ -187,11 +210,11 @@
       "confidence": 0.9,
       "title": "BOLA confirme sur /community/api/v2/community/posts : le role 'attacker_same_level' accede aux donnees du role 'victim'",
       "description": "2 champ(s) sensible(s) appartenant a la victime ont ete retrouves, avec la meme valeur, dans la reponse obtenue par l'attaquant : nickname, email.",
-      "affected_endpoint": "/community/api/v2/community/posts/nkdeM6T654bYnvzCMR9ate",
-      "evidence_test_id": "bola-00001",
+      "affected_endpoint": "/community/api/v2/community/posts/ZwGuevQAhskYbTaFEWTaXJ",
+      "evidence_test_id": "bola-00005",
       "victim_role": "victim",
       "attacker_role": "attacker_same_level",
-      "detected_at": "2026-09-13T19:03:17.758238+00:00"
+      "detected_at": "2026-09-16T12:31:57.638554+00:00"
     },
     {
       "detector": "bola",
@@ -200,50 +223,37 @@
       "confidence": 0.9,
       "title": "BOLA confirme sur /community/api/v2/community/posts : le role 'attacker_lower_level' accede aux donnees du role 'victim'",
       "description": "2 champ(s) sensible(s) appartenant a la victime ont ete retrouves, avec la meme valeur, dans la reponse obtenue par l'attaquant : nickname, email.",
-      "affected_endpoint": "/community/api/v2/community/posts/nkdeM6T654bYnvzCMR9ate",
-      "evidence_test_id": "bola-00002",
+      "affected_endpoint": "/community/api/v2/community/posts/ZwGuevQAhskYbTaFEWTaXJ",
+      "evidence_test_id": "bola-00006",
       "victim_role": "victim",
       "attacker_role": "attacker_lower_level",
-      "detected_at": "2026-09-13T19:03:19.861070+00:00"
-    },
-    {
-      "detector": "bfla",
-      "owasp_category": "API5:2023 - Broken Function Level Authorization",
-      "severity": "high",
-      "confidence": 0.9,
-      "title": "BFLA confirme sur GET /workshop/api/management/users/all : le role 'attacker_same_level' (privilege inferieur a 'mechanic') a pu executer cette action reservee.",
-      "description": "La baseline avec un compte reellement autorise a reussi. Le meme appel avec le token du role 'attacker_same_level' a egalement reussi (code 200), alors qu'il aurait du etre refuse.",
-      "affected_endpoint": "GET /workshop/api/management/users/all",
-      "evidence_test_id": "",
-      "victim_role": "mechanic",
-      "attacker_role": "attacker_same_level",
-      "detected_at": "2026-09-13T19:03:28.855464+00:00"
-    },
-    {
-      "detector": "bfla",
-      "owasp_category": "API5:2023 - Broken Function Level Authorization",
-      "severity": "high",
-      "confidence": 0.9,
-      "title": "BFLA confirme sur GET /workshop/api/management/users/all : le role 'attacker_lower_level' (privilege inferieur a 'mechanic') a pu executer cette action reservee.",
-      "description": "La baseline avec un compte reellement autorise a reussi. Le meme appel avec le token du role 'attacker_lower_level' a egalement reussi (code 200), alors qu'il aurait du etre refuse.",
-      "affected_endpoint": "GET /workshop/api/management/users/all",
-      "evidence_test_id": "",
-      "victim_role": "mechanic",
-      "attacker_role": "attacker_lower_level",
-      "detected_at": "2026-09-13T19:03:31.162007+00:00"
+      "detected_at": "2026-09-16T12:31:59.705173+00:00"
     },
     {
       "detector": "rate_limiting",
       "owasp_category": "API4:2023 - Unrestricted Resource Consumption",
       "severity": "medium",
-      "confidence": 0.6,
-      "title": "Absence de rate limiting detectee sur GET /identity/api/v2/user/dashboard : 15 requetes consecutives acceptees sans throttling.",
-      "description": "15 requetes ont ete envoyees en succession rapide sans qu'aucune ne recoive de code 429 (Too Many Requests). Codes recus : [200]. Cela ne prouve pas une absence totale de limitation (un seuil plus eleve ou une fenetre glissante differente pourrait exister au-dela de cet echantillon volontairement borne), mais suggere qu'aucune protection n'est active a cette echelle - confiance plafonnee en consequence.",
+      "confidence": 0.55,
+      "title": "Absence de rate limiting detectee sur GET /identity/api/v2/user/dashboard : 20 requetes consecutives acceptees sans throttling.",
+      "description": "20 requetes ont ete envoyees en succession rapide sans qu'aucune ne recoive de code 429 (Too Many Requests). Codes recus : [200]. Cela ne prouve pas une absence totale de limitation (un seuil plus eleve ou une fenetre glissante differente pourrait exister au-dela de cet echantillon volontairement borne), mais suggere qu'aucune protection n'est active a cette echelle - confiance plafonnee en consequence.",
       "affected_endpoint": "GET /identity/api/v2/user/dashboard",
-      "evidence_test_id": "rate_limiting-00011",
+      "evidence_test_id": "rate_limiting-00026",
       "victim_role": "N/A",
       "attacker_role": "attacker_same_level",
-      "detected_at": "2026-09-13T19:05:02.728903+00:00"
+      "detected_at": "2026-09-16T12:36:44.193367+00:00"
+    },
+    {
+      "detector": "rate_limiting",
+      "owasp_category": "API4:2023 - Unrestricted Resource Consumption",
+      "severity": "medium",
+      "confidence": 0.55,
+      "title": "Absence de rate limiting detectee sur POST /identity/api/v2/user/pictures : 20 requetes consecutives acceptees sans throttling.",
+      "description": "20 requetes ont ete envoyees en succession rapide sans qu'aucune ne recoive de code 429 (Too Many Requests). Codes recus : [500]. Cela ne prouve pas une absence totale de limitation (un seuil plus eleve ou une fenetre glissante differente pourrait exister au-dela de cet echantillon volontairement borne), mais suggere qu'aucune protection n'est active a cette echelle - confiance plafonnee en consequence. Un endpoint POST repete a cette echelle peut, contrairement a une simple lecture, avoir un impact reel (notifications, emails, calcul serveur) - risque de deni de service applicatif (layer 7).",
+      "affected_endpoint": "POST /identity/api/v2/user/pictures",
+      "evidence_test_id": "rate_limiting-00027",
+      "victim_role": "N/A",
+      "attacker_role": "attacker_same_level",
+      "detected_at": "2026-09-16T12:37:25.853948+00:00"
     },
     {
       "detector": "ssrf_cloud",
@@ -253,10 +263,10 @@
       "title": "SSRF probable (NON confirme par contenu) sur POST /workshop/api/merchant/contact_mechanic : le champ 'body:mechanic_api' a provoque un depassement de delai (35s) en pointant vers http://169.254.169.254/latest/meta-data/ (AWS).",
       "description": "Aucune reponse recue apres 35s alors que les autres requetes a cette cible repondent normalement en quelques centaines de millisecondes. Un champ qui se contente d'un echo ou d'une validation locale ne peut pas provoquer un tel delai - ce comportement suggere fortement une tentative de connexion sortante reelle vers l'URL injectee, meme si son contenu (donc la preuve forte de metadonnees exposees) n'a pas pu etre recupere dans le delai imparti. A verifier manuellement (augmenter encore le timeout, ou capturer le trafic sortant du serveur) avant de considerer ce finding comme une preuve definitive.",
       "affected_endpoint": "POST /workshop/api/merchant/contact_mechanic",
-      "evidence_test_id": "ssrf_cloud-00015",
+      "evidence_test_id": "ssrf_cloud-00032",
       "victim_role": "N/A",
       "attacker_role": "attacker_same_level",
-      "detected_at": "2026-09-13T19:05:47.290311+00:00"
+      "detected_at": "2026-09-16T12:38:11.781434+00:00"
     },
     {
       "detector": "ssrf_cloud",
@@ -266,10 +276,10 @@
       "title": "SSRF probable (NON confirme par contenu) sur POST /workshop/api/merchant/contact_mechanic : le champ 'body:mechanic_api' a provoque un depassement de delai (35s) en pointant vers http://169.254.169.254/computeMetadata/v1/ (GCP).",
       "description": "Aucune reponse recue apres 35s alors que les autres requetes a cette cible repondent normalement en quelques centaines de millisecondes. Un champ qui se contente d'un echo ou d'une validation locale ne peut pas provoquer un tel delai - ce comportement suggere fortement une tentative de connexion sortante reelle vers l'URL injectee, meme si son contenu (donc la preuve forte de metadonnees exposees) n'a pas pu etre recupere dans le delai imparti. A verifier manuellement (augmenter encore le timeout, ou capturer le trafic sortant du serveur) avant de considerer ce finding comme une preuve definitive.",
       "affected_endpoint": "POST /workshop/api/merchant/contact_mechanic",
-      "evidence_test_id": "ssrf_cloud-00016",
+      "evidence_test_id": "ssrf_cloud-00033",
       "victim_role": "N/A",
       "attacker_role": "attacker_same_level",
-      "detected_at": "2026-09-13T19:06:24.343003+00:00"
+      "detected_at": "2026-09-16T12:38:48.814801+00:00"
     },
     {
       "detector": "ssrf_cloud",
@@ -279,10 +289,10 @@
       "title": "SSRF probable (NON confirme par contenu) sur POST /workshop/api/merchant/contact_mechanic : le champ 'body:mechanic_api' a provoque un depassement de delai (35s) en pointant vers http://169.254.169.254/metadata/instance?api-version=2021-02-01 (AZURE).",
       "description": "Aucune reponse recue apres 35s alors que les autres requetes a cette cible repondent normalement en quelques centaines de millisecondes. Un champ qui se contente d'un echo ou d'une validation locale ne peut pas provoquer un tel delai - ce comportement suggere fortement une tentative de connexion sortante reelle vers l'URL injectee, meme si son contenu (donc la preuve forte de metadonnees exposees) n'a pas pu etre recupere dans le delai imparti. A verifier manuellement (augmenter encore le timeout, ou capturer le trafic sortant du serveur) avant de considerer ce finding comme une preuve definitive.",
       "affected_endpoint": "POST /workshop/api/merchant/contact_mechanic",
-      "evidence_test_id": "ssrf_cloud-00017",
+      "evidence_test_id": "ssrf_cloud-00034",
       "victim_role": "N/A",
       "attacker_role": "attacker_same_level",
-      "detected_at": "2026-09-13T19:07:01.407739+00:00"
+      "detected_at": "2026-09-16T12:39:25.877442+00:00"
     }
   ]
 }

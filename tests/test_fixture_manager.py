@@ -7,13 +7,11 @@ detail, ces detecteurs n'ont tout simplement rien a tester - en
 silence, sans erreur visible. Aucun appel reseau reel : requests.post
 et requests.request sont mockes.
 
-Un des tests ci-dessous (test_match_detail_endpoint_known_limitation_*)
-fige deliberement un comportement ACTUEL non souhaitable, decouvert en
-benchmarkant contre crAPI (ground truth crapi-1) : le matching
-creation -> detail par prefixe de chemin echoue sur des API non
-strictement RESTful. Objectif du test : eviter que ce gap connu ne
-soit "redecouvert" par surprise plus tard, et le faire echouer bruyamment
-le jour ou quelqu'un corrige effectivement la logique de matching.
+Le matching creation -> detail a d'abord ete limite au prefixe strict
+de chemin, ce qui echouait sur des API non strictement RESTful
+(decouvert en benchmarkant contre crAPI, ground truth crapi-1) - voir
+test_match_detail_endpoint_resolves_non_prefix_crapi_case pour le
+repli par segment de ressource qui corrige ce cas.
 """
 
 from unittest.mock import MagicMock, patch
@@ -143,21 +141,45 @@ def test_match_detail_endpoint_returns_none_when_nothing_matches():
     assert fm._match_detail_endpoint(creation_ep) is None
 
 
-def test_match_detail_endpoint_known_limitation_non_prefix_paths_are_not_linked():
+def test_match_detail_endpoint_resolves_non_prefix_crapi_case():
     """
-    Reproduit crAPI : /identity/api/v2/vehicle/add_vehicle (creation) et
-    /identity/api/v2/vehicle/{vehicleId}/location (detail) designent la
-    meme ressource logique, mais le detail path ne commence pas par
-    "creation_path/" - le matching par prefixe echoue. Consequence
-    reelle : le detecteur BOLA ne teste jamais cet endpoint (benchmark
-    crapi-1, predicted_outcome "fn" confirme en conditions reelles).
+    Regression (limite crapi-1 corrigee) : /identity/api/v2/vehicle/add_vehicle
+    (creation) et /identity/api/v2/vehicle/{vehicleId}/location (detail)
+    designent la meme ressource logique, mais le detail path ne
+    commence pas par "creation_path/" - le matching par prefixe seul
+    echoue. Le repli sur le segment "vehicle" (partage par les deux
+    chemins, juste avant le parametre de detail) doit les relier.
     """
     creation_ep = _endpoint("/identity/api/v2/vehicle/add_vehicle", "POST")
     detail_ep = _endpoint("/identity/api/v2/vehicle/{vehicleId}/location", "GET", has_path_param=True)
     fm = FixtureManager(
         endpoints=[creation_ep, detail_ep], raw_openapi_spec={"paths": {}}, session_manager=_FakeSessionManager(),
     )
+    assert fm._match_detail_endpoint(creation_ep) is detail_ep
+
+
+def test_match_detail_endpoint_fallback_ignores_unrelated_resource():
+    """Le repli par segment ne doit matcher que si le nom de ressource
+    est reellement partage - pas n'importe quel endpoint GET a parametre."""
+    creation_ep = _endpoint("/api/v2/vehicle/add_vehicle", "POST")
+    unrelated_detail_ep = _endpoint("/api/v2/coupon/{couponId}", "GET", has_path_param=True)
+    fm = FixtureManager(
+        endpoints=[creation_ep, unrelated_detail_ep],
+        raw_openapi_spec={"paths": {}}, session_manager=_FakeSessionManager(),
+    )
     assert fm._match_detail_endpoint(creation_ep) is None
+
+
+def test_match_detail_endpoint_prefix_match_still_takes_priority():
+    """Quand un match par prefixe strict existe, il doit toujours etre
+    prefere au repli par segment (heuristique la plus fiable d'abord)."""
+    creation_ep = _endpoint("/items", "POST")
+    prefix_detail_ep = _endpoint("/items/{id}", "GET", has_path_param=True)
+    fm = FixtureManager(
+        endpoints=[creation_ep, prefix_detail_ep],
+        raw_openapi_spec={"paths": {}}, session_manager=_FakeSessionManager(),
+    )
+    assert fm._match_detail_endpoint(creation_ep) is prefix_detail_ep
 
 
 # --- _extract_object_id ---
