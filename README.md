@@ -62,10 +62,4 @@ Vue d'ensemble du pipeline et des choix de conception :
 pytest
 ```
 
-## État d'avancement
 
-Les priorités P0 du cahier des charges (BOLA différentiel, gestion de
-fixtures/propriété, preuve rejouable, allowlist, secrets chiffrés au
-repos, scoring de risque agrégé) sont livrées. Le détail complet
-(P0/P1/P2, ce qui est fait vs restant) est tenu à jour dans le mémoire
-de PFE plutôt que dans ce fichier, pour éviter la duplication.
