@@ -6,8 +6,7 @@ dans la détection **BOLA/IDOR** par tests différentiels multi-comptes,
 absence de rate limiting, abus d'introspection/complexité GraphQL, et
 SSRF vers les métadonnées cloud (AWS/GCP/Azure).
 
-Projet de Fin d'Études — Cycle Ingénieur Cybersécurité, ENSA Agadir.
-Cahier des charges complet : `../Cahier_des_charges_API_Sentinel_v2.md`.
+
 
 ## Principe
 
