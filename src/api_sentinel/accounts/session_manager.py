@@ -15,6 +15,11 @@ from api_sentinel.security.secrets_vault import SecretsVault
 logger = logging.getLogger(__name__)
 
 
+class RoleVerificationError(Exception):
+    """Levee quand le role reel d'un compte (cote API) ne correspond pas
+    au role attendu declare en configuration (ENF1)."""
+
+
 @dataclass
 class Account:
     
@@ -135,10 +140,11 @@ class SessionManager:
         return account
 
     def _extract_token(self, response_data: dict) -> str:
-        
+
         for field_name in ["token", "access_token", "jwt", "accessToken"]:
-            if field_name in response_data:
-                return response_data[field_name]
+            value = response_data.get(field_name)
+            if value:
+                return value
 
         raise KeyError(
             "Impossible de trouver le token dans la reponse de login. "
@@ -185,12 +191,21 @@ class SessionManager:
             return
 
         if real_role != expected_role:
-            logger.error(
-                "INCOHERENCE DE ROLE : le compte '%s' a un role reel "
-                "'%s' cote API, different du role attendu '%s' declare "
-                "en configuration. Les tests BFLA lies a ce compte "
-                "seront non fiables tant que ce n'est pas corrige.",
-                account.role, real_role, expected_role,
+            # ENF1 : les detecteurs BOLA/BFLA raisonnent uniquement sur le
+            # role DECLARE (account.role / expected_role) pour decider
+            # qui est "superieur" ou "inferieur" en privilege. Un role
+            # reel different rendrait chaque finding bati sur ce compte
+            # non fiable (ex. un faux "attacker_lower_level" en realite
+            # admin ferait passer un acces legitime pour un BFLA confirme).
+            # On refuse donc de continuer avec une incoherence connue,
+            # plutot que de logger une erreur et poursuivre quand meme.
+            raise RoleVerificationError(
+                f"Incoherence de role pour le compte '{account.role}' "
+                f"({account.email}) : role reel '{real_role}' cote API, "
+                f"different du role attendu '{expected_role}' declare en "
+                f"configuration. Corrige 'expected_role' dans le fichier de "
+                f"comptes, ou le role reel de ce compte cote cible, avant "
+                f"de relancer le scan."
             )
         else:
             logger.info(

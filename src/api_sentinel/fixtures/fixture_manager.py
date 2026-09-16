@@ -18,6 +18,20 @@ logger = logging.getLogger(__name__)
 ID_FIELD_CANDIDATES = ["id", "uuid", "_id", "objectId"]
 
 
+def _substitute_first_path_param(path: str, value: str) -> str:
+    """
+    Remplace le premier segment '{...}' de `path` par `value`, traite
+    comme une chaine LITTERALE. re.sub(pattern, value, ...) interprete
+    a tort tout '\\1', '\\g<name>'... present dans `value` comme une
+    reference de groupe de la regex de remplacement - un identifiant
+    d'objet renvoye par le serveur (URL-encode, cle composite) peut
+    contenir une telle sequence, ce qui fait lever re.error et
+    interrompt tout le scan. Le passer via une fonction de
+    remplacement (plutot qu'une chaine) desactive cette interpretation.
+    """
+    return re.sub(r"\{[^}]+\}", lambda _: value, path, count=1)
+
+
 class FixtureCreationError(Exception):
     
     pass
@@ -40,7 +54,7 @@ class Fixture:
 
     def resolved_detail_url(self) -> str:
         
-        return re.sub(r"\{[^}]+\}", self.object_id, self.detail_endpoint, count=1)
+        return _substitute_first_path_param(self.detail_endpoint, self.object_id)
 
 
 @dataclass
@@ -242,7 +256,7 @@ class FixtureManager:
         if not detail_endpoint:
             return None
 
-        resolved_path = re.sub(r"\{[^}]+\}", str(object_id), detail_endpoint.path, count=1)
+        resolved_path = _substitute_first_path_param(detail_endpoint.path, str(object_id))
         url = f"{account.base_url}{resolved_path}"
 
         try:

@@ -144,8 +144,17 @@ class ExcessiveExposureDetector:
             return schema
         ref = schema["$ref"]
         if not ref.startswith("#/components/schemas/"):
+            logger.debug(
+                "Reference non supportee ignoree (schema traite comme vide) : %s", ref,
+            )
             return {}
-        return self.components.get(ref.split("/")[-1], {})
+        resolved = self.components.get(ref.split("/")[-1])
+        if resolved is None:
+            logger.debug(
+                "Schema reference introuvable, traite comme vide : %s", ref,
+            )
+            return {}
+        return resolved
 
     def _record_finding(
         self, fixture: Fixture, sensitive_undocumented: list[str], evidence_test_id: str

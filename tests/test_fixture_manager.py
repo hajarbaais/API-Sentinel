@@ -22,7 +22,37 @@ import pytest
 import requests
 
 from api_sentinel.discovery.openapi_parser import Endpoint
-from api_sentinel.fixtures.fixture_manager import Fixture, FixtureManager
+from api_sentinel.fixtures.fixture_manager import (
+    Fixture,
+    FixtureManager,
+    _substitute_first_path_param,
+)
+
+
+# --- _substitute_first_path_param : substitution litterale (pas une regex) ---
+
+def test_substitute_first_path_param_basic():
+    assert _substitute_first_path_param("/users/{id}", "42") == "/users/42"
+
+
+def test_substitute_first_path_param_only_replaces_first_segment():
+    assert (
+        _substitute_first_path_param("/a/{id}/b/{other}", "42")
+        == "/a/42/b/{other}"
+    )
+
+
+def test_substitute_first_path_param_value_with_backslash_digit_does_not_crash():
+    """Regression : re.sub(pattern, object_id, path) interprete un
+    object_id contenant '\\1' comme une reference de groupe et leve
+    re.error au lieu de faire une simple substitution litterale."""
+    result = _substitute_first_path_param("/users/{id}", "abc\\1def")
+    assert result == "/users/abc\\1def"
+
+
+def test_substitute_first_path_param_value_with_backreference_group_does_not_crash():
+    result = _substitute_first_path_param("/users/{id}", "\\g<name>")
+    assert result == "/users/\\g<name>"
 
 
 class _FakeAccount:

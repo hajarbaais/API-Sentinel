@@ -30,6 +30,11 @@ from api_sentinel.evidence.evidence_store import EvidenceStore
 
 logger = logging.getLogger(__name__)
 
+# < scoring.confidence.MANUAL_REVIEW_THRESHOLD (0.6) : ce detecteur doit
+# rester classe LOW/"a revue manuelle" (ENF1, cf. docstring du module),
+# pas MEDIUM - garde explicite plutot qu'une valeur en dur repetee.
+CONFIDENCE = 0.55
+
 
 def is_missing_rate_limit(status_codes: list[int], expected_count: int) -> bool:
     """
@@ -134,7 +139,7 @@ class RateLimitingDetector:
             detector=self.DETECTOR_NAME,
             owasp_category=OwaspCategory.RESOURCE_CONSUMPTION,
             severity=Severity.MEDIUM,
-            confidence=0.6,
+            confidence=CONFIDENCE,
             title=(
                 f"Absence de rate limiting detectee sur GET {endpoint.path} : "
                 f"{len(status_codes)} requetes consecutives acceptees sans "

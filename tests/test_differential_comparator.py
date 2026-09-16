@@ -81,6 +81,24 @@ def test_empty_or_falsy_values_are_never_counted_as_a_leak(comparator):
     assert result.is_leak is False
 
 
+def test_zero_value_in_sensitive_field_is_a_leak(comparator):
+    """Regression : `False in (None, "", 0)` valait True (False == 0 en
+    Python), ce qui faisait ignorer a tort un champ sensible partage a 0."""
+    victim = {"iban": 0}
+    attacker = {"iban": 0}
+    result = comparator.compare(victim, attacker, 200)
+    assert result.is_leak is True
+    assert "iban" in result.leaked_fields
+
+
+def test_false_value_in_sensitive_field_is_a_leak(comparator):
+    victim = {"iban": False}
+    attacker = {"iban": False}
+    result = comparator.compare(victim, attacker, 200)
+    assert result.is_leak is True
+    assert "iban" in result.leaked_fields
+
+
 def test_non_sensitive_field_collision_is_not_a_leak(comparator):
     # meme id entre victime et attaquant : coincidence normale (compteur
     # sequentiel ou fixture separee), pas une fuite car 'id' n'est pas

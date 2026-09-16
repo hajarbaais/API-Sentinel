@@ -109,7 +109,7 @@ class BFLADetector:
         status, body = self._send_request(path, method, attacker_role)
         finding_confirmed = status in (200, 201, 204)
 
-        self.evidence_store.record(
+        evidence = self.evidence_store.record(
             detector=self.DETECTOR_NAME,
             request_method=method,
             request_url=url,
@@ -121,7 +121,7 @@ class BFLADetector:
         )
 
         if finding_confirmed:
-            self._record_finding(path, method, attacker_role, minimum_role, status)
+            self._record_finding(path, method, attacker_role, minimum_role, status, evidence.test_id)
 
     def _send_request(self, path: str, method: str, role: str) -> tuple[int, dict | None]:
         account = self.session_manager.get_account(role)
@@ -143,7 +143,8 @@ class BFLADetector:
         return response.status_code, body
 
     def _record_finding(
-        self, path: str, method: str, attacker_role: str, minimum_role: str, status: int
+        self, path: str, method: str, attacker_role: str, minimum_role: str, status: int,
+        evidence_test_id: str,
     ) -> None:
         finding = Finding(
             detector=self.DETECTOR_NAME,
@@ -162,7 +163,7 @@ class BFLADetector:
                 f"du etre refuse."
             ),
             affected_endpoint=f"{method} {path}",
-            evidence_test_id="",
+            evidence_test_id=evidence_test_id,
             victim_role=minimum_role,
             attacker_role=attacker_role,
         )

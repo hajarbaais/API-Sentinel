@@ -141,6 +141,8 @@ class FieldDiscovery:
                 for i, item in enumerate(value):
                     if isinstance(item, dict):
                         flat.update(self._flatten(item, f"{full_key}[{i}]"))
+                    else:
+                        flat[f"{full_key}[{i}]"] = item
             else:
                 flat[full_key] = value
         return flat

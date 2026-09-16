@@ -8,6 +8,7 @@ EF9 (execution CLI, integrable en CI/CD).
 import argparse
 import logging
 import sys
+from pathlib import Path
 
 from api_sentinel.accounts.session_manager import SessionManager
 from api_sentinel.detectors.bfla import BFLADetector
@@ -130,6 +131,18 @@ def build_parser() -> argparse.ArgumentParser:
 
 def run_scan(args: argparse.Namespace) -> ReportGenerator:
     """Execute le pipeline complet et retourne le rapport assemble."""
+    # BOLA n'est pas desactivable (--skip-bola n'existe pas, contrairement
+    # aux autres detecteurs) : contrairement a eux, un fichier de
+    # sensibilite des champs manquant doit donc etre signale clairement
+    # avant tout travail (parsing, authentification), plutot que de
+    # planter en cours de scan avec une trace peu lisible.
+    if not Path(args.sensitive_fields).exists():
+        raise FileNotFoundError(
+            f"Fichier de champs sensibles introuvable : '{args.sensitive_fields}' "
+            "(--sensitive-fields). Requis pour le detecteur BOLA, qui ne peut "
+            "pas etre desactive."
+        )
+
     openapi_parser = OpenAPIParser(args.spec)
     endpoints = openapi_parser.parse()
 

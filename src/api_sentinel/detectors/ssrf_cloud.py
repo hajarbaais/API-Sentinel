@@ -207,8 +207,17 @@ class URLFieldDiscovery:
             return schema
         ref = schema["$ref"]
         if not ref.startswith("#/components/schemas/"):
+            logger.debug(
+                "Reference non supportee ignoree (schema traite comme vide) : %s", ref,
+            )
             return {}
-        return self.components.get(ref.split("/")[-1], {})
+        resolved = self.components.get(ref.split("/")[-1])
+        if resolved is None:
+            logger.debug(
+                "Schema reference introuvable, traite comme vide : %s", ref,
+            )
+            return {}
+        return resolved
 
     def _looks_like_url(self, field_name: str, schema: dict, example_value=None) -> bool:
         if schema.get("format") in self.URI_FORMATS:

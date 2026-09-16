@@ -127,8 +127,12 @@ class DifferentialComparator:
                 continue
             if flat_attacker[key] != victim_value:
                 continue
-            if victim_value in (None, "", 0):
-                
+            if victim_value is None or victim_value == "":
+                # Valeur absente/vide : rien a "fuiter". Ne PAS exclure 0
+                # ou False ici - ce sont des valeurs sensibles reelles
+                # possibles (solde a 0, compte non verifie) et
+                # `False in (None, "", 0)` vaut True en Python (False == 0),
+                # ce qui masquait a tort ces fuites.
                 continue
 
             field_name = key.split(".")[-1].split("[")[0]

@@ -95,17 +95,58 @@ class MassAssignmentDetector:
         if base_payload is None:
             return
 
+        baseline_data = self._create_baseline(endpoint, account, base_payload)
+
         logger.info(
             "Test mass assignment sur %s (role: %s) - %d champ(s) suspect(s) decouvert(s) a tester...",
             endpoint.path, account.role, len(candidates),
         )
 
         for candidate in candidates:
-            self._test_injection(endpoint, account, base_payload, candidate)
+            self._test_injection(endpoint, account, base_payload, candidate, baseline_data)
+
+    def _create_baseline(
+        self, endpoint: Endpoint, account: Account, base_payload: dict
+    ) -> dict:
+        """
+        Cree UNE ressource de controle sans aucun champ injecte, pour
+        connaitre la valeur NATURELLE de chaque champ observable a la
+        creation. Sans ce controle negatif, un champ dont la valeur
+        par defaut cote serveur coincide deja avec la valeur injectee
+        (ex. un booleen qui vaut naturellement False, "injecte" a
+        False par PayloadGenerator) serait signale a tort comme mass
+        assignment confirme, alors que le serveur n'a rien accepte de
+        notre injection - il a simplement renvoye sa valeur par
+        defaut habituelle.
+        """
+        url = f"{account.base_url}{endpoint.path}"
+        try:
+            response = requests.post(
+                url, json=base_payload, headers=account.auth_headers(),
+                timeout=self.request_timeout,
+            )
+        except requests.RequestException as exc:
+            logger.debug("Baseline mass assignment impossible sur %s : %s", url, exc)
+            return {}
+
+        if response.status_code not in (200, 201):
+            return {}
+
+        try:
+            data = response.json()
+        except ValueError:
+            return {}
+
+        object_id = self._extract_object_id(data)
+        if object_id is not None:
+            fetched = self._fetch_full_object(endpoint, object_id, account)
+            if fetched is not None:
+                return fetched
+        return data
 
     def _test_injection(
         self, endpoint: Endpoint, account: Account, base_payload: dict,
-        candidate: InjectionCandidate,
+        candidate: InjectionCandidate, baseline_data: dict,
     ) -> None:
         payload = dict(base_payload)
         payload[candidate.field_name] = candidate.injected_value
@@ -146,14 +187,25 @@ class MassAssignmentDetector:
             finding_confirmed=False,
         )
 
-        if self._field_was_accepted(full_data, candidate.field_name, candidate.injected_value):
+        if self._field_was_accepted(
+            full_data, baseline_data, candidate.field_name, candidate.injected_value
+        ):
             self._record_finding(endpoint, account, candidate, evidence.test_id)
 
-    def _field_was_accepted(self, data: dict, field_name: str, injected_value) -> bool:
+    def _field_was_accepted(
+        self, data: dict, baseline_data: dict, field_name: str, injected_value
+    ) -> bool:
         flat = self._flatten(data)
+        baseline_flat = self._flatten(baseline_data)
         for key, value in flat.items():
-            if key.split(".")[-1] == field_name and value == injected_value:
-                return True
+            if key.split(".")[-1] != field_name or value != injected_value:
+                continue
+            if baseline_flat.get(key) == injected_value:
+                # Meme valeur obtenue SANS injection (controle negatif) :
+                # ce n'est pas une preuve d'acceptation, juste la valeur
+                # par defaut habituelle du serveur a la creation.
+                continue
+            return True
         return False
 
     def _flatten(self, data, parent_key: str = "") -> dict:
@@ -168,6 +220,8 @@ class MassAssignmentDetector:
                 for i, item in enumerate(value):
                     if isinstance(item, dict):
                         flat.update(self._flatten(item, f"{full_key}[{i}]"))
+                    else:
+                        flat[f"{full_key}[{i}]"] = item
             else:
                 flat[full_key] = value
         return flat
